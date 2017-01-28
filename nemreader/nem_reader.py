@@ -188,7 +188,7 @@ def parse_300_row(row, interval=30, uom='kWh'):
 
     num_intervals = int(24 / (interval / 60))
     interval_date = parse_datetime(row[1], '%Y%m%d')
-    last_interval = 1 + num_intervals
+    last_interval = 2 + num_intervals
     interval_values = parse_intervals(
         row[2:last_interval], interval_date, interval, uom)
 
@@ -207,11 +207,11 @@ def parse_300_row(row, interval=30, uom='kWh'):
 
     return IntervalRecord(interval_date,
                           interval_values,
+                          row[last_interval + 0],
                           row[last_interval + 1],
                           row[last_interval + 2],
-                          row[last_interval + 3],
+                          parse_datetime(row[last_interval + 3]),
                           parse_datetime(row[last_interval + 4]),
-                          parse_datetime(row[last_interval + 5]),
                           )
 
 
@@ -244,8 +244,8 @@ def parse_intervals(rows, interval_date, interval, uom):
 
     interval_delta = datetime.timedelta(minutes=interval)
     for i, row in enumerate(rows):
-        reading_start = interval_date + (i * interval_delta) - interval_delta
-        reading_end = interval_date + (i * interval_delta)
+        reading_start = interval_date + (i * interval_delta)
+        reading_end = interval_date + (i * interval_delta) + interval_delta
         yield Reading(reading_start, reading_end, float(row), uom)
 
 
