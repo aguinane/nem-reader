@@ -12,7 +12,7 @@ def flatten_list(l):
 
 Reading = namedtuple(
     'Reading',
-    ['reading_start', 'reading_end', 'reading_value', 'UOM', 'quality_method']
+    ['reading_start', 'reading_end', 'reading_value', 'UOM', 'quality_method', 'event']
 )
 
 
@@ -39,6 +39,7 @@ class MeterRecord(object):
     
     def parse_file(self, nem_file):
         reader = csv.reader(nem_file, delimiter=',', quotechar='"')
+        nmi_suffix = None
         
         for i, row in enumerate(reader):
             record_indicator = int(row[0])
@@ -58,6 +59,8 @@ class MeterRecord(object):
                 self.file_created_for = header_record.to_participant
 
             elif record_indicator == 900:
+                for nmi_suffix in self.readings:
+                    self.readings[nmi_suffix] = flatten_list(self.readings[nmi_suffix])
                 break  # End of file
 
             elif self.version_header == 'NEM12' and record_indicator == 200:
@@ -80,8 +83,15 @@ class MeterRecord(object):
 
             elif self.version_header == 'NEM12' and record_indicator == 300:
                 interval_record = parse_300_row(row, interval, uom)
-                for reading in interval_record.interval_values:
-                    self.readings[nmi_suffix].append(reading)
+                # don't flatten the list of interval readings at this stage,
+                # as they may need to be adjusted by a 400 row
+                self.readings[nmi_suffix].append(interval_record.interval_values)
+
+            elif self.version_header == 'NEM12' and record_indicator == 400:
+                event_record = parse_400_row(row)
+                self.readings[nmi_suffix][-1] = update_readings(
+                    self.readings[nmi_suffix][-1], event_record
+                )
 
             elif self.version_header == 'NEM13' and record_indicator == 250:
                 BasicMeterData = parse_250_row(row)
@@ -107,7 +117,7 @@ def calculate_manual_reading(basic_meter_data):
     value = basic_meter_data.CurrentRegisterRead - basic_meter_data.PreviousRegisterRead
     uom = basic_meter_data.UOM
     quality_method = basic_meter_data.CurrentQualityMethod
-    return Reading(reading_start, reading_end, value, uom, quality_method)
+    return Reading(reading_start, reading_end, value, uom, quality_method, "")
 
 
 def parse_100_row(row):
@@ -221,7 +231,7 @@ def parse_300_row(row, interval=30, uom='kWh'):
     last_interval = 2 + num_intervals
     quality_method = row[last_interval]
 
-    interval_values = parse_intervals(
+    interval_values = parse_interval_records(
         row[2:last_interval], interval_date, interval, uom, quality_method
     )
 
@@ -248,6 +258,21 @@ def parse_300_row(row, interval=30, uom='kWh'):
                           )
 
 
+def parse_interval_records(interval_record, interval_date, interval,
+                           uom, quality_method):
+    """ Convert interval values into tuples with datetime
+    """
+
+    interval_delta = datetime.timedelta(minutes=interval)
+    return [Reading(interval_date + (i * interval_delta),
+                    interval_date + (i * interval_delta) + interval_delta,
+                    float(val),
+                    uom,
+                    quality_method,
+                    "") # event is unknown at time of reading
+            for i, val in enumerate(interval_record)]
+
+
 def parse_400_row(row):
     """ Interval event record (400)
     """
@@ -271,15 +296,23 @@ def parse_400_row(row):
                        )
 
 
-def parse_intervals(rows, interval_date, interval, uom, quality_method):
-    """ Convert interval values into tuples with datetime
-    """
+def set_reading_event(reading, event_record):
+    return Reading(reading.reading_start,
+                   reading.reading_end,
+                   reading.reading_value,
+                   reading.UOM,
+                   event_record.quality_method,
+                   event_record.reason_description)
 
-    interval_delta = datetime.timedelta(minutes=interval)
-    for i, row in enumerate(rows):
-        reading_start = interval_date + (i * interval_delta)
-        reading_end = interval_date + (i * interval_delta) + interval_delta
-        yield Reading(reading_start, reading_end, float(row), uom, quality_method)
+
+def update_readings(readings, event_record):
+    """ updates readings from a 300 row to reflect any events found in a
+        subsequent 400 row
+    """
+    # event intervals are 1-indexed
+    for i in range(event_record.start_interval - 1, event_record.end_interval):
+        readings[i] = set_reading_event(readings[i], event_record)
+    return readings
 
 
 def parse_datetime(record, date_format='%Y%m%d%H%M%S'):
