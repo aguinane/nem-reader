@@ -4,6 +4,12 @@ import datetime
 from collections import namedtuple
 
 
+def flatten_list(l):
+    """ takes a list of lists, l and returns a flat list
+    """
+    return [v for inner_l in l for v in inner_l]
+        
+
 Reading = namedtuple(
     'Reading',
     ['reading_start', 'reading_end', 'reading_value', 'UOM', 'quality_method']
@@ -14,60 +20,83 @@ class MeterRecord(object):
     """ A NEM meter record
     """
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, read_on_open=True):
         """ Initialise Object
         """
-        self.file_path = file_path
         self.readings = dict()
+        self.NMI = None
+        self.file_path = None
+
+        if read_on_open:
+            self.read_file(file_path)
+
+        
+    def read_file(self, file_path):
+        self.file_path = file_path
 
         with open(file_path) as nem_file:
-            reader = csv.reader(nem_file, delimiter=',', quotechar='"')
-            for i, row in enumerate(reader):
-                if i == 0:
-                    if row[0] != '100':
-                        logging.warning('NEM Files must start with a 100 row')
+            return self.parse_file(nem_file)
+    
+    def parse_file(self, nem_file):
+        reader = csv.reader(nem_file, delimiter=',', quotechar='"')
+        
+        for i, row in enumerate(reader):
+            record_indicator = int(row[0])
+            
+            if i == 0 and record_indicator != 100:
+                raise ValueError("NEM Files must start with a 100 row")
+            
+            if record_indicator == 100:
+                header_record = parse_100_row(row)
+                if header_record.version_header not in ['NEM12', 'NEM13']:
+                    raise ValueError(
+                        "Invalid NEM version {}".format(header_record.version_header)
+                    )
+                self.version_header = header_record.version_header
+                self.file_created = header_record.datetime
+                self.file_created_by = header_record.from_participant
+                self.file_created_for = header_record.to_participant
 
-                    header_record = parse_100_row(row)
-                    self.version_header = header_record.version_header
-                    self.file_created = header_record.datetime
-                    self.file_created_by = header_record.from_participant
-                    self.file_created_for = header_record.to_participant
-                    continue
+            elif record_indicator == 900:
+                break  # End of file
 
-                record_indicator = int(row[0])
-                if record_indicator == 900:
-                    break  # End of file
+            elif self.version_header == 'NEM12' and record_indicator == 200:
+                meter_data = parse_200_row(row)
+                
+                if self.NMI is None:
+                    self.NMI = meter_data.NMI
+                elif self.NMI != meter_data.NMI:
+                    msg = "Different NMIs in same file: {}, {}".format(
+                        self.NMI, meter_data.NMI
+                    )
+                    raise ValueError(msg)
 
-                if self.version_header == 'NEM12':
-                    if record_indicator == 200:
-                        meter_data = parse_200_row(row)
-                        self.NMI = meter_data.NMI
-                        self.NMI_configuration = meter_data.NMI_configuration
-                        uom = meter_data.UOM
-                        interval = meter_data.interval_length
-                        nmi_suffix = meter_data.NMI_suffix
-                        if nmi_suffix not in self.readings:
-                            self.readings[nmi_suffix] = []
+                self.NMI_configuration = meter_data.NMI_configuration
+                uom = meter_data.UOM
+                interval = meter_data.interval_length
+                nmi_suffix = meter_data.NMI_suffix
+                if nmi_suffix not in self.readings:
+                    self.readings[nmi_suffix] = []
 
-                    if record_indicator == 300:
-                        interval_record = parse_300_row(row, interval, uom)
-                        for reading in interval_record.interval_values:
-                            self.readings[nmi_suffix].append(reading)
-
-                elif self.version_header == 'NEM13':
-                    BasicMeterData = parse_250_row(row)
-                    self.NMI = BasicMeterData.NMI
-                    self.NMI_configuration = BasicMeterData.NMIConfiguration
-                    nmi_suffix = BasicMeterData.NMISuffix
-                    if nmi_suffix not in self.readings:
-                        self.readings[nmi_suffix] = []
-                    reading = calculate_manual_reading(BasicMeterData)
+            elif self.version_header == 'NEM12' and record_indicator == 300:
+                interval_record = parse_300_row(row, interval, uom)
+                for reading in interval_record.interval_values:
                     self.readings[nmi_suffix].append(reading)
 
-                else:
-                    msg = "The NEM version {} is invalid".format(
-                        self.version_header)
-                    logging.warning(msg)
+            elif self.version_header == 'NEM13' and record_indicator == 250:
+                BasicMeterData = parse_250_row(row)
+                self.NMI = BasicMeterData.NMI
+                self.NMI_configuration = BasicMeterData.NMIConfiguration
+                nmi_suffix = BasicMeterData.NMISuffix
+                if nmi_suffix not in self.readings:
+                    self.readings[nmi_suffix] = []
+                reading = calculate_manual_reading(BasicMeterData)
+                self.readings[nmi_suffix].append(reading)
+
+            else:
+                logging.warning(
+                    "Ignoring unknown row with record indcator {}".format(record_indicator)
+                )
 
 
 def calculate_manual_reading(basic_meter_data):
