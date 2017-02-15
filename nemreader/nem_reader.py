@@ -8,7 +8,7 @@ def flatten_list(l):
     """ takes a list of lists, l and returns a flat list
     """
     return [v for inner_l in l for v in inner_l]
-        
+
 
 Reading = namedtuple(
     'Reading',
@@ -30,23 +30,23 @@ class MeterRecord(object):
         if read_on_open:
             self.read_file(file_path)
 
-        
+
     def read_file(self, file_path):
         self.file_path = file_path
 
         with open(file_path) as nem_file:
             return self.parse_file(nem_file)
-    
+
     def parse_file(self, nem_file):
         reader = csv.reader(nem_file, delimiter=',', quotechar='"')
         nmi_suffix = None
-        
+
         for i, row in enumerate(reader):
             record_indicator = int(row[0])
-            
+
             if i == 0 and record_indicator != 100:
                 raise ValueError("NEM Files must start with a 100 row")
-            
+
             if record_indicator == 100:
                 header_record = parse_100_row(row)
                 if header_record.version_header not in ['NEM12', 'NEM13']:
@@ -64,8 +64,13 @@ class MeterRecord(object):
                 break  # End of file
 
             elif self.version_header == 'NEM12' and record_indicator == 200:
-                meter_data = parse_200_row(row)
-                
+                try:
+                    meter_data = parse_200_row(row)
+                except ValueError:
+                    logging.error('Error passing 200 row:')
+                    logging.error(row)
+                    raise
+
                 if self.NMI is None:
                     self.NMI = meter_data.NMI
                 elif self.NMI != meter_data.NMI:
@@ -101,11 +106,11 @@ class MeterRecord(object):
                 if nmi_suffix not in self.readings:
                     self.readings[nmi_suffix] = []
                 reading = calculate_manual_reading(BasicMeterData)
-                self.readings[nmi_suffix].append(reading)
+                self.readings[nmi_suffix].append([reading])
 
             else:
                 logging.warning(
-                    "Ignoring unknown row with record indcator {}".format(record_indicator)
+                    "Record indicator {} not supported and was skipped".format(record_indicator)
                 )
 
 
@@ -131,7 +136,7 @@ def parse_100_row(row):
          'to_participant']
     )
     return HeaderRecord(row[1],
-                        parse_datetime(row[2], '%Y%m%d%H%M'),
+                        parse_datetime(row[2]),
                         row[3],
                         row[4])
 
@@ -227,7 +232,7 @@ def parse_300_row(row, interval=30, uom='kWh'):
     """
 
     num_intervals = int(24 / (interval / 60))
-    interval_date = parse_datetime(row[1], '%Y%m%d')
+    interval_date = parse_datetime(row[1])
     last_interval = 2 + num_intervals
     quality_method = row[last_interval]
 
@@ -315,9 +320,12 @@ def update_readings(readings, event_record):
     return readings
 
 
-def parse_datetime(record, date_format='%Y%m%d%H%M%S'):
+def parse_datetime(record):
     """ Parse a datetime string into a python datetime object """
     if record == '':
         return None
     else:
-        return datetime.datetime.strptime(record, date_format)
+        try:
+            return datetime.datetime.strptime(record.strip(), '%Y%m%d%H%M%S')
+        except ValueError:
+            return datetime.datetime.strptime(record.strip(), '%Y%m%d')
