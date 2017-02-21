@@ -20,6 +20,7 @@ def parse_nem_file(nem_file):
     
     header = None # metadata from header row
     readings = {} # readings nested by NMI then channel
+    trans = {} # transactions nested by NMI then channel
     nmi_d = None # current NMI details block that readings apply to
 
     for i, row in enumerate(reader):
@@ -54,6 +55,10 @@ def parse_nem_file(nem_file):
                 readings[nmi_d.nmi] = {}
             if nmi_d.nmi_suffix not in readings[nmi_d.nmi]:
                 readings[nmi_d.nmi][nmi_d.nmi_suffix] = []
+            if nmi_d.nmi not in trans:
+                trans[nmi_d.nmi] = {}
+            if nmi_d.nmi_suffix not in trans[nmi_d.nmi]:
+                trans[nmi_d.nmi][nmi_d.nmi_suffix] = []
 
         elif header.version_header == 'NEM12' and record_indicator == 300:
             interval_record = parse_300_row(row, nmi_d.interval_length, nmi_d.uom)
@@ -68,41 +73,56 @@ def parse_nem_file(nem_file):
             readings[nmi_d.nmi][nmi_d.nmi_suffix][-1] = update_readings(
                 readings[nmi_d.nmi][nmi_d.nmi_suffix][-1], event_record
             )
+        
+        elif header.version_header == 'NEM12' and record_indicator == 500:
+            b2b_details = parse_500_row(row)
+            trans[nmi_d.nmi][nmi_d.nmi_suffix].append(b2b_details)
+
+        elif header.version_header == 'NEM13' and record_indicator == 550:
+            b2b_details = parse_550_row(row)
+            trans[nmi_d.nmi][nmi_d.nmi_suffix].append(b2b_details)
 
         elif header.version_header == 'NEM13' and record_indicator == 250:
-            # Reset the blocking for current 200 row.
-            # According to the MDFF spec a  200 and 250 row shouldn't
-            # be in the same file.
-            nmi_d = None
             basic_data = parse_250_row(row)
             reading = calculate_manual_reading(basic_data)
 
-            if basic_data.nmi not in readings:
-                readings[basic_data.nmi] = {}
-            if basic_data.nmi_suffix not in readings[basic_data.nmi]:
-                readings[basic_data.nmi][basic_data.nmi_suffix] = []
+            nmi_d = basic_data
 
-            readings[basic_data.nmi][basic_data.nmi_suffix].append(
+            if basic_data.nmi not in readings:
+                readings[nmi_d.nmi] = {}
+            if nmi_d.nmi_suffix not in readings[nmi_d.nmi]:
+                readings[nmi_d.nmi][nmi_d.nmi_suffix] = []
+            if nmi_d.nmi not in trans:
+                trans[nmi_d.nmi] = {}
+            if nmi_d.nmi_suffix not in trans[nmi_d.nmi]:
+                trans[nmi_d.nmi][nmi_d.nmi_suffix] = []
+
+            readings[nmi_d.nmi][nmi_d.nmi_suffix].append(
                 [reading]
             )
-
 
         else:
             logging.warning(
                 "Record indicator {} not supported and was skipped".format(record_indicator)
             )
-    return nm.NEMFile(header, readings)
+    return nm.NEMFile(header, readings, trans)
 
 
 def calculate_manual_reading(basic_data):
     """ Calculate the interval between two manual readings
     """
-    reading_start = basic_data.previous_register_read_datetime
-    reading_end = basic_data.current_register_read_datetime
-    value = basic_data.current_register_read - basic_data.previous_register_read
+    t_start = basic_data.previous_register_read_datetime
+    t_end = basic_data.current_register_read_datetime
+    read_start = basic_data.previous_register_read
+    read_end = basic_data.current_register_read
+    value = basic_data.quantity
+
     uom = basic_data.uom
     quality_method = basic_data.current_quality_method
-    return nm.Reading(reading_start, reading_end, value, uom, quality_method, "")
+
+    return nm.Reading(t_start, t_end,
+                      read_start, read_end, value,
+                      uom, quality_method, "")
 
 
 def parse_100_row(row):
@@ -157,7 +177,7 @@ def parse_250_row(row):
                              parse_datetime(row[22]))
 
 
-def parse_300_row(row, interval=30, uom='kWh'):
+def parse_300_row(row, interval, uom):
     """ Interval data record (300)
     """
 
@@ -187,12 +207,10 @@ def parse_interval_records(interval_record, interval_date, interval,
     interval_delta = datetime.timedelta(minutes=interval)
     return [nm.Reading(interval_date + (i * interval_delta),
                        interval_date + (i * interval_delta) + interval_delta,
-                       float(val),
-                       uom,
-                       quality_method,
+                       None, None, float(val),
+                       uom, quality_method,
                        "") # event is unknown at time of reading
             for i, val in enumerate(interval_record)]
-
 
 def parse_400_row(row):
     """ Interval event record (400)
@@ -202,16 +220,7 @@ def parse_400_row(row):
                           int(row[2]), 
                           row[3], 
                           row[4], 
-                          row[5]) 
-
-
-def set_reading_event(reading, event_record):
-    return nm.Reading(reading.reading_start,
-                      reading.reading_end,
-                      reading.reading_value,
-                      reading.UOM,
-                      event_record.quality_method,
-                      event_record.reason_description)
+                          row[5])
 
 
 def update_readings(readings, event_record):
@@ -220,8 +229,23 @@ def update_readings(readings, event_record):
     """
     # event intervals are 1-indexed
     for i in range(event_record.start_interval - 1, event_record.end_interval):
-        readings[i] = set_reading_event(readings[i], event_record)
+        readings[i] = nm.Reading(readings[i].t_start,
+                                 readings[i].t_end,
+                                 readings[i].read_start,
+                                 readings[i].read_end,
+                                 readings[i].read_value,
+                                 readings[i].uom,
+                                 event_record.quality_method,
+                                 event_record.reason_description)
     return readings
+
+
+def parse_500_row(row):
+    return nm.B2BDetails12(row[1], row[2], row[3], row[4])
+
+
+def parse_550_row(row):
+    return nm.B2BDetails13(row[1], row[2], row[3], row[4])
 
 
 def parse_datetime(record):

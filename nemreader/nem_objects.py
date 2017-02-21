@@ -2,7 +2,9 @@ from collections import namedtuple
 
 Reading = namedtuple(
     'Reading',
-    ['reading_start', 'reading_end', 'reading_value', 'UOM', 'quality_method', 'event']
+    ['t_start', 't_end',
+     'read_start', 'read_end', 'read_value',
+     'uom', 'quality_method', 'event']
 )
 
 
@@ -77,6 +79,23 @@ BasicMeterData = namedtuple(
      'msats_load_datetime']
 )
 
+B2BDetails12 = namedtuple(
+    'B2BDetails12',
+    ['trans_code',
+     'ret_service_order',
+     'read_datetime',
+     'index_read']
+    
+)
+
+B2BDetails13 = namedtuple(
+    'B2BDetails13',
+    ['previous_trans_code',
+     'previous_ret_service_order',
+     'current_trans_code',
+     'current_ret_service_order']
+)
+
 NEMFile = namedtuple(
-    'NEMFile', ['header', 'readings']
+    'NEMFile', ['header', 'readings', 'transactions']
 )

@@ -3,7 +3,8 @@ import nemreader as nr
 def print_meter_record(file_path, rows=5):
     """ Output readings for specified number of rows to console """
     m = nr.read_nem_file(file_path)
-    print(m.header)
+    print('Header:', m.header)
+    print('Transactions:', m.transactions)
     for nmi in m.readings:
         for channel in m.readings[nmi]:
             print(nmi, 'Channel', channel)
@@ -23,6 +24,10 @@ if __name__ == '__main__':
     print('\nExample NEM12 - Multiple Quality Methods:')
     print('-' * 10)
     print_meter_record('examples/Example_NEM12_multiple_quality.csv', 5)
+
+    print('\nExample NEM12 - Multiple Meters:')
+    print('-' * 10)
+    print_meter_record('examples/Example_NEM12_multiple_meters.csv', 5)
 
     print('\nExample NEM13 - Actual Read:')
     print('-' * 10)
