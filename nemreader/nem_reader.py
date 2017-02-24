@@ -206,12 +206,12 @@ def parse_interval_records(interval_record, interval_date, interval,
     """
 
     interval_delta = datetime.timedelta(minutes=interval)
-    return [nm.Reading(interval_date + (i * interval_delta),
-                       interval_date + (i * interval_delta) + interval_delta,
-                       float(val),
-                       uom, quality_method,
-                       "", # event is unknown at time of reading
-                       None, None # No before and after readings for intervals
+    return [nm.Reading(t_start=interval_date + (i * interval_delta),
+                       t_end=interval_date + (i * interval_delta) + interval_delta,
+                       read_value=float(val),
+                       uom=uom, quality_method=quality_method,
+                       event="", # event is unknown at time of reading
+                       read_start=None, read_end=None # No before and after readings for intervals
                       )
             for i, val in enumerate(interval_record)]
 
@@ -232,14 +232,14 @@ def update_readings(readings, event_record):
     """
     # event intervals are 1-indexed
     for i in range(event_record.start_interval - 1, event_record.end_interval):
-        readings[i] = nm.Reading(readings[i].t_start,
-                                 readings[i].t_end,
-                                 readings[i].read_start,
-                                 readings[i].read_end,
-                                 readings[i].read_value,
-                                 readings[i].uom,
-                                 event_record.quality_method,
-                                 event_record.reason_description)
+        readings[i] = nm.Reading(t_start=readings[i].t_start,
+                                 t_end=readings[i].t_end,
+                                 read_value=readings[i].read_value,
+                                 uom=readings[i].uom,
+                                 quality_method=event_record.quality_method,
+                                 event=event_record.reason_description,
+                                 read_start=readings[i].read_start,
+                                 read_end=readings[i].read_end)
     return readings
 
 
