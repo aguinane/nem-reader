@@ -17,7 +17,7 @@ def read_nem_file(file_path):
 
 def parse_nem_file(nem_file):
     reader = csv.reader(nem_file, delimiter=',', quotechar='"')
-    
+
     header = None # metadata from header row
     readings = {} # readings nested by NMI then channel
     trans = {} # transactions nested by NMI then channel
@@ -73,7 +73,7 @@ def parse_nem_file(nem_file):
             readings[nmi_d.nmi][nmi_d.nmi_suffix][-1] = update_readings(
                 readings[nmi_d.nmi][nmi_d.nmi_suffix][-1], event_record
             )
-        
+
         elif header.version_header == 'NEM12' and record_indicator == 500:
             b2b_details = parse_500_row(row)
             trans[nmi_d.nmi][nmi_d.nmi_suffix].append(b2b_details)
@@ -121,8 +121,9 @@ def calculate_manual_reading(basic_data):
     quality_method = basic_data.current_quality_method
 
     return nm.Reading(t_start, t_end,
-                      read_start, read_end, value,
-                      uom, quality_method, "")
+                      value,
+                      uom, quality_method, "",
+                      read_start, read_end)
 
 
 def parse_100_row(row):
@@ -207,9 +208,11 @@ def parse_interval_records(interval_record, interval_date, interval,
     interval_delta = datetime.timedelta(minutes=interval)
     return [nm.Reading(interval_date + (i * interval_delta),
                        interval_date + (i * interval_delta) + interval_delta,
-                       None, None, float(val),
+                       float(val),
                        uom, quality_method,
-                       "") # event is unknown at time of reading
+                       "", # event is unknown at time of reading
+                       None, None # No before and after readings for intervals
+                      )
             for i, val in enumerate(interval_record)]
 
 def parse_400_row(row):
@@ -217,9 +220,9 @@ def parse_400_row(row):
     """
 
     return nm.EventRecord(int(row[1]),
-                          int(row[2]), 
-                          row[3], 
-                          row[4], 
+                          int(row[2]),
+                          row[3],
+                          row[4],
                           row[5])
 
 

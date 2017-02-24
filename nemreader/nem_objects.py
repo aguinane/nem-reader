@@ -3,8 +3,9 @@ from collections import namedtuple
 Reading = namedtuple(
     'Reading',
     ['t_start', 't_end',
-     'read_start', 'read_end', 'read_value',
-     'uom', 'quality_method', 'event']
+     'read_value',
+     'uom', 'quality_method', 'event',
+     'read_start', 'read_end']
 )
 
 
@@ -85,7 +86,7 @@ B2BDetails12 = namedtuple(
      'ret_service_order',
      'read_datetime',
      'index_read']
-    
+
 )
 
 B2BDetails13 = namedtuple(
