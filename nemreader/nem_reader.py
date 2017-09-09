@@ -78,7 +78,7 @@ def parse_nem_file(nem_file):
 
         elif header.version_header == 'NEM12' and record_indicator == 400:
             event_record = parse_400_row(row)
-            readings[nmi_d.nmi][nmi_d.nmi_suffix][-1] = update_readings(
+            readings[nmi_d.nmi][nmi_d.nmi_suffix][-1] = update_reading_events(
                 readings[nmi_d.nmi][nmi_d.nmi_suffix][-1], event_record
             )
 
@@ -130,7 +130,7 @@ def calculate_manual_reading(basic_data):
 
     return nm.Reading(t_start, t_end,
                       value,
-                      uom, quality_method, "",
+                      uom, quality_method, "", "",
                       read_start, read_end)
 
 
@@ -212,7 +212,8 @@ def parse_interval_records(interval_record, interval_date, interval,
                        t_end=interval_date + (i * interval_delta) + interval_delta,
                        read_value=float(val),
                        uom=uom, quality_method=quality_method,
-                       event="", # event is unknown at time of reading
+                       event_code="", # event is unknown at time of reading
+                       event_desc="", # event is unknown at time of reading
                        read_start=None, read_end=None # No before and after readings for intervals
                       )
             for i, val in enumerate(interval_record)]
@@ -228,8 +229,8 @@ def parse_400_row(row: list) -> tuple:
                           row[5])
 
 
-def update_readings(readings, event_record):
-    """ updates readings from a 300 row to reflect any events found in a
+def update_reading_events(readings, event_record):
+    """ Updates readings from a 300 row to reflect any events found in a
         subsequent 400 row
     """
     # event intervals are 1-indexed
@@ -239,7 +240,8 @@ def update_readings(readings, event_record):
                                  read_value=readings[i].read_value,
                                  uom=readings[i].uom,
                                  quality_method=event_record.quality_method,
-                                 event=event_record.reason_description,
+                                 event_code=event_record.reason_code,
+                                 event_desc=event_record.reason_description,
                                  read_start=readings[i].read_start,
                                  read_end=readings[i].read_end)
     return readings

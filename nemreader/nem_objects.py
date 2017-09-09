@@ -10,7 +10,7 @@ Reading = namedtuple(
     'Reading',
     ['t_start', 't_end',
      'read_value',
-     'uom', 'quality_method', 'event',
+     'uom', 'quality_method', 'event_code', 'event_desc',
      'read_start', 'read_end']
 )
 
