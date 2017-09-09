@@ -1,3 +1,9 @@
+"""
+    nemreader.nem_objects
+    ~~~~~
+    Define named tuple data classes
+"""
+
 from collections import namedtuple
 
 Reading = namedtuple(
@@ -15,7 +21,7 @@ NmiDetails = namedtuple(
      'nmi_configuration',
      'register_id',
      'nmi_suffix',
-     'mdm_datastream_identitfier',
+     'mdm_datastream_identifier',
      'meter_serial_number',
      'uom',
      'interval_length',
@@ -40,7 +46,7 @@ IntervalRecord = namedtuple(
      'reason_code',
      'reason_description',
      'update_datetime',
-     'MSATS_load_datatime']
+     'msats_load_datatime']
 )
 
 

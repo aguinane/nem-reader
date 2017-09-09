@@ -1,3 +1,9 @@
+"""
+    nemreader.nem_reader
+    ~~~~~
+    Read MDFF format
+"""
+
 import csv
 import logging
 import datetime
@@ -11,11 +17,13 @@ def flatten_list(l):
 
 
 def read_nem_file(file_path):
+    """ Read in NEM file and return meter readings named tuple """
     with open(file_path) as nmi_file:
         return parse_nem_file(nmi_file)
 
 
 def parse_nem_file(nem_file):
+    """ Parse NEM csv and return meter readings named tuple """
     reader = csv.reader(nem_file, delimiter=',', quotechar='"')
 
     header = None # metadata from header row
@@ -103,14 +111,14 @@ def parse_nem_file(nem_file):
 
         else:
             logging.warning(
-                "Record indicator {} not supported and was skipped".format(record_indicator)
+                "Record indicator %s not supported and was skipped",
+                record_indicator
             )
     return nm.NEMFile(header, readings, trans)
 
 
 def calculate_manual_reading(basic_data):
-    """ Calculate the interval between two manual readings
-    """
+    """ Calculate the interval between two manual readings """
     t_start = basic_data.previous_register_read_datetime
     t_end = basic_data.current_register_read_datetime
     read_start = basic_data.previous_register_read
@@ -126,20 +134,16 @@ def calculate_manual_reading(basic_data):
                       read_start, read_end)
 
 
-def parse_100_row(row):
-    """ Parse header record (100)
-    """
-
+def parse_100_row(row: list):
+    """ Parse header record (100) """
     return nm.HeaderRecord(row[1],
                            parse_datetime(row[2]),
                            row[3],
                            row[4])
 
 
-def parse_200_row(row):
-    """ Parse NMI data details record (200)
-    """
-
+def parse_200_row(row: list):
+    """ Parse NMI data details record (200) """
     return nm.NmiDetails(row[1],
                          row[2],
                          row[3],
@@ -151,9 +155,8 @@ def parse_200_row(row):
                          parse_datetime(row[9]))
 
 
-def parse_250_row(row):
-    """ Parse basic meter data record (250)
-    """
+def parse_250_row(row: list):
+    """ Parse basic meter data record (250) """
     return nm.BasicMeterData(row[1],
                              row[2],
                              row[3],
@@ -178,7 +181,7 @@ def parse_250_row(row):
                              parse_datetime(row[22]))
 
 
-def parse_300_row(row, interval, uom):
+def parse_300_row(row: list, interval: int, uom: str):
     """ Interval data record (300) """
 
     num_intervals = int(24 * 60 / interval)
@@ -214,9 +217,9 @@ def parse_interval_records(interval_record, interval_date, interval,
                       )
             for i, val in enumerate(interval_record)]
 
-def parse_400_row(row):
-    """ Interval event record (400)
-    """
+
+def parse_400_row(row: list) -> tuple:
+    """ Interval event record (400) """
 
     return nm.EventRecord(int(row[1]),
                           int(row[2]),
@@ -242,15 +245,17 @@ def update_readings(readings, event_record):
     return readings
 
 
-def parse_500_row(row):
+def parse_500_row(row: list) -> tuple:
+    """ Parse B2B details record """
     return nm.B2BDetails12(row[1], row[2], row[3], row[4])
 
 
-def parse_550_row(row):
+def parse_550_row(row: list) -> tuple:
+    """ Parse B2B details record """
     return nm.B2BDetails13(row[1], row[2], row[3], row[4])
 
 
-def parse_datetime(record):
+def parse_datetime(record: str) -> datetime.datetime:
     """ Parse a datetime string into a python datetime object """
     if record == '':
         return None
