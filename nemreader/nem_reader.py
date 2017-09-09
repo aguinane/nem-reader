@@ -179,10 +179,9 @@ def parse_250_row(row):
 
 
 def parse_300_row(row, interval, uom):
-    """ Interval data record (300)
-    """
+    """ Interval data record (300) """
 
-    num_intervals = int(24 / (interval / 60))
+    num_intervals = int(24 * 60 / interval)
     interval_date = parse_datetime(row[1])
     last_interval = 2 + num_intervals
     quality_method = row[last_interval]
