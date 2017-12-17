@@ -1,6 +1,14 @@
+"""
+    nemreader.nem_reader
+    ~~~~~
+    Read MDFF format
+"""
+
+import os
 import csv
 import logging
 import datetime
+import zipfile
 import nemreader.nem_objects as nm
 
 
@@ -11,19 +19,36 @@ def flatten_list(l):
 
 
 def read_nem_file(file_path):
-    with open(file_path) as nmi_file:
-        return parse_nem_file(nmi_file)
-
+    """ Read in NEM file and return meter readings named tuple """
+    filename, file_extension = os.path.splitext(file_path)
+    if file_extension.lower() == '.zip':
+        with zipfile.ZipFile(file_path, 'r') as archive:
+            for csv_file in archive.namelist():
+                with archive.open(csv_file) as csv_text:
+                    # Zip file is open in binary mode
+                    # So decode then convert back to list
+                    nmi_file = csv_text.read().decode('utf-8').splitlines()
+                    return parse_nem_file(nmi_file)
+    else:
+        with open(file_path) as nmi_file:
+            return parse_nem_file(nmi_file)
+            
 
 def parse_nem_file(nem_file):
-    reader = csv.reader(nem_file, delimiter=',', quotechar='"')
+    """ Parse NEM file and return meter readings named tuple """
+    reader = csv.reader(nem_file, delimiter=',')
+    return parse_nem_rows(reader)
 
+
+def parse_nem_rows(nem_list) -> nm.NEMFile:
+    """ Parse NEM row iterator and return meter readings named tuple """
+    
     header = None # metadata from header row
-    readings = {} # readings nested by NMI then channel
-    trans = {} # transactions nested by NMI then channel
+    readings = dict() # readings nested by NMI then channel
+    trans = dict() # transactions nested by NMI then channel
     nmi_d = None # current NMI details block that readings apply to
 
-    for i, row in enumerate(reader):
+    for i, row in enumerate(nem_list):
         record_indicator = int(row[0])
 
         if i == 0 and record_indicator != 100:
@@ -70,7 +95,7 @@ def parse_nem_file(nem_file):
 
         elif header.version_header == 'NEM12' and record_indicator == 400:
             event_record = parse_400_row(row)
-            readings[nmi_d.nmi][nmi_d.nmi_suffix][-1] = update_readings(
+            readings[nmi_d.nmi][nmi_d.nmi_suffix][-1] = update_reading_events(
                 readings[nmi_d.nmi][nmi_d.nmi_suffix][-1], event_record
             )
 
@@ -103,14 +128,14 @@ def parse_nem_file(nem_file):
 
         else:
             logging.warning(
-                "Record indicator {} not supported and was skipped".format(record_indicator)
+                "Record indicator %s not supported and was skipped",
+                record_indicator
             )
     return nm.NEMFile(header, readings, trans)
 
 
-def calculate_manual_reading(basic_data):
-    """ Calculate the interval between two manual readings
-    """
+def calculate_manual_reading(basic_data) -> nm.Reading:
+    """ Calculate the interval between two manual readings """
     t_start = basic_data.previous_register_read_datetime
     t_end = basic_data.current_register_read_datetime
     read_start = basic_data.previous_register_read
@@ -122,24 +147,20 @@ def calculate_manual_reading(basic_data):
 
     return nm.Reading(t_start, t_end,
                       value,
-                      uom, quality_method, "",
+                      uom, quality_method, "", "",
                       read_start, read_end)
 
 
-def parse_100_row(row):
-    """ Parse header record (100)
-    """
-
+def parse_100_row(row: list) -> nm.HeaderRecord:
+    """ Parse header record (100) """
     return nm.HeaderRecord(row[1],
                            parse_datetime(row[2]),
                            row[3],
                            row[4])
 
 
-def parse_200_row(row):
-    """ Parse NMI data details record (200)
-    """
-
+def parse_200_row(row: list) -> nm.NmiDetails:
+    """ Parse NMI data details record (200) """
     return nm.NmiDetails(row[1],
                          row[2],
                          row[3],
@@ -151,9 +172,8 @@ def parse_200_row(row):
                          parse_datetime(row[9]))
 
 
-def parse_250_row(row):
-    """ Parse basic meter data record (250)
-    """
+def parse_250_row(row: list) -> nm.BasicMeterData:
+    """ Parse basic meter data record (250) """
     return nm.BasicMeterData(row[1],
                              row[2],
                              row[3],
@@ -178,11 +198,10 @@ def parse_250_row(row):
                              parse_datetime(row[22]))
 
 
-def parse_300_row(row, interval, uom):
-    """ Interval data record (300)
-    """
+def parse_300_row(row: list, interval: int, uom: str) -> nm.IntervalRecord:
+    """ Interval data record (300) """
 
-    num_intervals = int(24 / (interval / 60))
+    num_intervals = int(24 * 60 / interval)
     interval_date = parse_datetime(row[1])
     last_interval = 2 + num_intervals
     quality_method = row[last_interval]
@@ -210,14 +229,15 @@ def parse_interval_records(interval_record, interval_date, interval,
                        t_end=interval_date + (i * interval_delta) + interval_delta,
                        read_value=float(val),
                        uom=uom, quality_method=quality_method,
-                       event="", # event is unknown at time of reading
+                       event_code="", # event is unknown at time of reading
+                       event_desc="", # event is unknown at time of reading
                        read_start=None, read_end=None # No before and after readings for intervals
                       )
             for i, val in enumerate(interval_record)]
 
-def parse_400_row(row):
-    """ Interval event record (400)
-    """
+
+def parse_400_row(row: list) -> tuple:
+    """ Interval event record (400) """
 
     return nm.EventRecord(int(row[1]),
                           int(row[2]),
@@ -226,8 +246,8 @@ def parse_400_row(row):
                           row[5])
 
 
-def update_readings(readings, event_record):
-    """ updates readings from a 300 row to reflect any events found in a
+def update_reading_events(readings, event_record):
+    """ Updates readings from a 300 row to reflect any events found in a
         subsequent 400 row
     """
     # event intervals are 1-indexed
@@ -237,21 +257,24 @@ def update_readings(readings, event_record):
                                  read_value=readings[i].read_value,
                                  uom=readings[i].uom,
                                  quality_method=event_record.quality_method,
-                                 event=event_record.reason_description,
+                                 event_code=event_record.reason_code,
+                                 event_desc=event_record.reason_description,
                                  read_start=readings[i].read_start,
                                  read_end=readings[i].read_end)
     return readings
 
 
-def parse_500_row(row):
+def parse_500_row(row: list) -> tuple:
+    """ Parse B2B details record """
     return nm.B2BDetails12(row[1], row[2], row[3], row[4])
 
 
-def parse_550_row(row):
+def parse_550_row(row: list) -> tuple:
+    """ Parse B2B details record """
     return nm.B2BDetails13(row[1], row[2], row[3], row[4])
 
 
-def parse_datetime(record):
+def parse_datetime(record: str) -> datetime.datetime:
     """ Parse a datetime string into a python datetime object """
     if record == '':
         return None
