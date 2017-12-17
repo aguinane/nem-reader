@@ -44,3 +44,8 @@ if __name__ == '__main__':
     print('\nReal NEM12 Example:')
     print('-' * 10)
     print_meter_record('examples/NEM12#DATA_16081001#WBAYM#3044076134.V01', 5)
+
+
+    print('\nZipped NEM12 Example:')
+    print('-' * 10)
+    print_meter_record('examples/NEM12#NEM1201005Scenario1#GLOBALM#NEMMCO.ZIP', 5)

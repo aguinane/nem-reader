@@ -4,9 +4,11 @@
     Read MDFF format
 """
 
+import os
 import csv
 import logging
 import datetime
+import zipfile
 import nemreader.nem_objects as nm
 
 
@@ -18,20 +20,35 @@ def flatten_list(l):
 
 def read_nem_file(file_path):
     """ Read in NEM file and return meter readings named tuple """
-    with open(file_path) as nmi_file:
-        return parse_nem_file(nmi_file)
-
+    filename, file_extension = os.path.splitext(file_path)
+    if file_extension.lower() == '.zip':
+        with zipfile.ZipFile(file_path, 'r') as archive:
+            for csv_file in archive.namelist():
+                with archive.open(csv_file) as csv_text:
+                    # Zip file is open in binary mode
+                    # So decode then convert back to list
+                    nmi_file = csv_text.read().decode('utf-8').splitlines()
+                    return parse_nem_file(nmi_file)
+    else:
+        with open(file_path) as nmi_file:
+            return parse_nem_file(nmi_file)
+            
 
 def parse_nem_file(nem_file):
-    """ Parse NEM csv and return meter readings named tuple """
-    reader = csv.reader(nem_file, delimiter=',', quotechar='"')
+    """ Parse NEM file and return meter readings named tuple """
+    reader = csv.reader(nem_file, delimiter=',')
+    return parse_nem_rows(reader)
 
+
+def parse_nem_rows(nem_list) -> nm.NEMFile:
+    """ Parse NEM row iterator and return meter readings named tuple """
+    
     header = None # metadata from header row
-    readings = {} # readings nested by NMI then channel
-    trans = {} # transactions nested by NMI then channel
+    readings = dict() # readings nested by NMI then channel
+    trans = dict() # transactions nested by NMI then channel
     nmi_d = None # current NMI details block that readings apply to
 
-    for i, row in enumerate(reader):
+    for i, row in enumerate(nem_list):
         record_indicator = int(row[0])
 
         if i == 0 and record_indicator != 100:
@@ -117,7 +134,7 @@ def parse_nem_file(nem_file):
     return nm.NEMFile(header, readings, trans)
 
 
-def calculate_manual_reading(basic_data):
+def calculate_manual_reading(basic_data) -> nm.Reading:
     """ Calculate the interval between two manual readings """
     t_start = basic_data.previous_register_read_datetime
     t_end = basic_data.current_register_read_datetime
@@ -134,7 +151,7 @@ def calculate_manual_reading(basic_data):
                       read_start, read_end)
 
 
-def parse_100_row(row: list):
+def parse_100_row(row: list) -> nm.HeaderRecord:
     """ Parse header record (100) """
     return nm.HeaderRecord(row[1],
                            parse_datetime(row[2]),
@@ -142,7 +159,7 @@ def parse_100_row(row: list):
                            row[4])
 
 
-def parse_200_row(row: list):
+def parse_200_row(row: list) -> nm.NmiDetails:
     """ Parse NMI data details record (200) """
     return nm.NmiDetails(row[1],
                          row[2],
@@ -155,7 +172,7 @@ def parse_200_row(row: list):
                          parse_datetime(row[9]))
 
 
-def parse_250_row(row: list):
+def parse_250_row(row: list) -> nm.BasicMeterData:
     """ Parse basic meter data record (250) """
     return nm.BasicMeterData(row[1],
                              row[2],
@@ -181,7 +198,7 @@ def parse_250_row(row: list):
                              parse_datetime(row[22]))
 
 
-def parse_300_row(row: list, interval: int, uom: str):
+def parse_300_row(row: list, interval: int, uom: str) -> nm.IntervalRecord:
     """ Interval data record (300) """
 
     num_intervals = int(24 * 60 / interval)

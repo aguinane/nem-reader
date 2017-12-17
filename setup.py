@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
     name = 'nemreader',
     packages = ['nemreader'],
-    version = '0.2.0',
+    version = '0.2.1',
     description = 'Parse NEM12 (interval metering data) and NEM13 (accumulated metering data) data files ',
     author = 'aguinane',
     author_email = 'alexguinane@gmail.com',

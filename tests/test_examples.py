@@ -1,13 +1,16 @@
-""" Test Suite
-"""
-
-import unittest
+""" Test Suite 
+""" 
+ 
+import unittest 
+import os
+import sys
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
 import nemreader as nr
 
 
 class TestNEM12ActualIntervals(unittest.TestCase):
-    """ Test the actual intervals example
-    """
+    """ Test the actual intervals example """
     def setUp(self):
         self.meter_data = nr.read_nem_file('examples/Example_NEM12_actual_interval.csv')
 
