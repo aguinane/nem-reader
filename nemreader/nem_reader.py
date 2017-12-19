@@ -28,22 +28,23 @@ def read_nem_file(file_path):
                     # Zip file is open in binary mode
                     # So decode then convert back to list
                     nmi_file = csv_text.read().decode('utf-8').splitlines()
-                    return parse_nem_file(nmi_file)
+                    reader = csv.reader(nmi_file, delimiter=',')
+                    return parse_nem_rows(reader, file_name=csv_file)
     else:
         with open(file_path) as nmi_file:
             return parse_nem_file(nmi_file)
-            
+ 
 
 def parse_nem_file(nem_file):
     """ Parse NEM file and return meter readings named tuple """
     reader = csv.reader(nem_file, delimiter=',')
-    return parse_nem_rows(reader)
+    return parse_nem_rows(reader, file_name=nem_file)
 
 
-def parse_nem_rows(nem_list) -> nm.NEMFile:
+def parse_nem_rows(nem_list, file_name=None) -> nm.NEMFile:
     """ Parse NEM row iterator and return meter readings named tuple """
-    
-    header = None # metadata from header row
+
+    header = nm.HeaderRecord(None, None, None, None, file_name)
     readings = dict() # readings nested by NMI then channel
     trans = dict() # transactions nested by NMI then channel
     nmi_d = None # current NMI details block that readings apply to
@@ -55,7 +56,7 @@ def parse_nem_rows(nem_list) -> nm.NEMFile:
             raise ValueError("NEM Files must start with a 100 row")
 
         if record_indicator == 100:
-            header = parse_100_row(row)
+            header = parse_100_row(row, file_name)
             if header.version_header not in ['NEM12', 'NEM13']:
                 raise ValueError(
                     "Invalid NEM version {}".format(header.version_header)
@@ -86,6 +87,8 @@ def parse_nem_rows(nem_list) -> nm.NEMFile:
                 trans[nmi_d.nmi][nmi_d.nmi_suffix] = []
 
         elif header.version_header == 'NEM12' and record_indicator == 300:
+            num_intervals = int(24 * 60 / nmi_d.interval_length)
+            assert len(row) > num_intervals, "Incomplete 300 Row in {}".format(file_name)
             interval_record = parse_300_row(row, nmi_d.interval_length, nmi_d.uom)
             # don't flatten the list of interval readings at this stage,
             # as they may need to be adjusted by a 400 row
@@ -151,12 +154,14 @@ def calculate_manual_reading(basic_data) -> nm.Reading:
                       read_start, read_end)
 
 
-def parse_100_row(row: list) -> nm.HeaderRecord:
+def parse_100_row(row: list, file_name: str) -> nm.HeaderRecord:
     """ Parse header record (100) """
     return nm.HeaderRecord(row[1],
                            parse_datetime(row[2]),
                            row[3],
-                           row[4])
+                           row[4],
+                           file_name,
+                           )
 
 
 def parse_200_row(row: list) -> nm.NmiDetails:
@@ -223,17 +228,25 @@ def parse_interval_records(interval_record, interval_date, interval,
                            uom, quality_method):
     """ Convert interval values into tuples with datetime
     """
-
     interval_delta = datetime.timedelta(minutes=interval)
     return [nm.Reading(t_start=interval_date + (i * interval_delta),
                        t_end=interval_date + (i * interval_delta) + interval_delta,
-                       read_value=float(val),
+                       read_value=parse_reading(val),
                        uom=uom, quality_method=quality_method,
                        event_code="", # event is unknown at time of reading
                        event_desc="", # event is unknown at time of reading
                        read_start=None, read_end=None # No before and after readings for intervals
                       )
             for i, val in enumerate(interval_record)]
+
+
+def parse_reading(val: str) -> float:
+    """ Convert reading value to float (if possible) """
+    try:
+        return float(val)
+    except ValueError:
+        logging.warning('Reading of "%s" is not a number', val)
+        return None  # Not a valid reading
 
 
 def parse_400_row(row: list) -> tuple:

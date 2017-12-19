@@ -5,5 +5,7 @@ python:
 # command to run tests
 install: pip install tox-travis
 script: tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)
+after_success:
+  - coveralls
 notifications:
-  email: false
+  email: false  
