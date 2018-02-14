@@ -33,7 +33,7 @@ def read_nem_file(file_path):
     else:
         with open(file_path) as nmi_file:
             return parse_nem_file(nmi_file)
- 
+
 
 def parse_nem_file(nem_file):
     """ Parse NEM file and return meter readings named tuple """
@@ -289,10 +289,9 @@ def parse_550_row(row: list) -> tuple:
 
 def parse_datetime(record: str) -> datetime.datetime:
     """ Parse a datetime string into a python datetime object """
+    # NEM defines Date8, DateTime12 and DateTime14
+    format_strings = {8: '%Y%m%d', 12: '%Y%m%d%H%M', 14: '%Y%m%d%H%M%S'}
     if record == '':
         return None
     else:
-        try:
-            return datetime.datetime.strptime(record.strip(), '%Y%m%d%H%M%S')
-        except ValueError:
-            return datetime.datetime.strptime(record.strip(), '%Y%m%d')
+        return datetime.datetime.strptime(record.strip(), format_strings[len(record.strip())])
