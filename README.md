@@ -1,6 +1,6 @@
 # nem-reader
 
-[![Build Status](https://travis-ci.org/aguinane/nem-reader.svg?branch=master)](https://travis-ci.org/aguinane/nem-reader)
+[![PyPI version](https://badge.fury.io/py/nemreader.svg)](https://badge.fury.io/py/nemreader) [![Build Status](https://travis-ci.org/aguinane/nem-reader.svg?branch=master)](https://travis-ci.org/aguinane/nem-reader) [![Coverage Status](https://coveralls.io/repos/github/aguinane/nem-reader/badge.svg)](https://coveralls.io/github/aguinane/nem-reader)
 
 The Australian Energy Market Operator (AEMO) defines a Meter Data File Format (MDFF) for reading energy billing data.
 [MDFF Specification](https://www.aemo.com.au/Stakeholder-Consultation/Consultations/Meter-Data-File-Format-Specification-NEM12-and-NEM13)
@@ -8,13 +8,13 @@ The Australian Energy Market Operator (AEMO) defines a Meter Data File Format (M
 This library sets out to parse these NEM12 (interval metering data) and NEM13 (accumulated metering data) data files into a useful python object, for use in other projects.
 
 First, read in the NEM file:
-```
+```python
 import nemreader as nr
 m = nr.read_nem_file(file_path)
 ```
 
 Then retreive the data for the NMI and channels of interest:
-```
+```python
 > print(m.header)
 HeaderRecord(version_header='NEM12', datetime=datetime.datetime(2004, 4, 20, 13, 0), from_participant='MDA1', to_participant='Ret1')
 

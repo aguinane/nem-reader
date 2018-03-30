@@ -34,7 +34,9 @@ HeaderRecord = namedtuple(
     ['version_header',
      'datetime',
      'from_participant',
-     'to_participant']
+     'to_participant',
+     'file_name',
+     ]
 )
 
 
