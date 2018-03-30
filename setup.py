@@ -19,9 +19,10 @@ except FileNotFoundError:
 setup(
     name='nemreader',
     packages=['nemreader'],
-    version='0.2.1',
+    version='0.2.2',
     description='Parse NEM12 (interval metering data) and NEM13 (accumulated metering data) data files ',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     author='aguinane',
     author_email='alexguinane@gmail.com',
     url='https://github.com/aguinane/nem-reader',
