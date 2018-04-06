@@ -27,3 +27,22 @@ Transactions: {'CCCC123456': {'E1': []}}
 >             print(reading)
 Reading(t_start=datetime.datetime(2004, 4, 17, 23, 30), t_end=datetime.datetime(2004, 4, 18, 0, 0), read_value=14.733, uom='kWh', quality_method='S14', event='', read_start=None, read_end=None)
 ```
+
+## Changing Formats
+
+You can also output the NEM file in a more human readable format:
+
+```python
+from nemreader import output_as_csv
+file_name = 'examples/unzipped/Example_NEM12_actual_interval.csv'
+output_file = output_as_csv(file_name)
+```
+
+Which outputs transposed values to a csv file for all channels:
+
+```
+period_start,period_end,E1,Q1,quality_method
+2004-02-01 00:00:00,2004-02-01 00:30:00,1.111,2.222,A
+2004-02-01 00:30:00,2004-02-01 01:00:00,1.111,2.222,A
+...
+```
