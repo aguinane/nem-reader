@@ -10,7 +10,15 @@ from nemreader import read_nem_file
 
 
 def output_as_csv(file_name, nmi=None, output_file=None):
-    """ Output NEM file readings to csv """
+    """
+    Transpose all channels and output a csv that is easier
+    to read and do charting on
+
+    :param file_name: The NEM file to process
+    :param nmi: Which NMI to output if more than one
+    :param output_file: Specify different output location
+    :returns: The file that was created
+    """
     
     m = read_nem_file(file_name)
     if nmi is None:

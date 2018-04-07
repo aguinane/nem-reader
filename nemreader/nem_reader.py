@@ -9,18 +9,24 @@ import csv
 import logging
 import datetime
 import zipfile
+from typing import List, Iterable
 import nemreader.nem_objects as nm
 
 
-def flatten_list(l):
+def flatten_list(l: List[list]) -> list:
     """ takes a list of lists, l and returns a flat list
     """
     return [v for inner_l in l for v in inner_l]
 
 
-def read_nem_file(file_path):
-    """ Read in NEM file and return meter readings named tuple """
-    filename, file_extension = os.path.splitext(file_path)
+def read_nem_file(file_path: str) -> nm.NEMFile:
+    """ Read in NEM file and return meter readings named tuple 
+
+    :param file_path: The NEM file to process
+    :returns: The file that was created
+    """
+
+    _, file_extension = os.path.splitext(file_path)
     if file_extension.lower() == '.zip':
         with zipfile.ZipFile(file_path, 'r') as archive:
             for csv_file in archive.namelist():
@@ -35,19 +41,19 @@ def read_nem_file(file_path):
             return parse_nem_file(nmi_file)
 
 
-def parse_nem_file(nem_file):
+def parse_nem_file(nem_file) -> nm.NEMFile:
     """ Parse NEM file and return meter readings named tuple """
     reader = csv.reader(nem_file, delimiter=',')
     return parse_nem_rows(reader, file_name=nem_file)
 
 
-def parse_nem_rows(nem_list, file_name=None) -> nm.NEMFile:
+def parse_nem_rows(nem_list: Iterable, file_name=None) -> nm.NEMFile:
     """ Parse NEM row iterator and return meter readings named tuple """
 
     header = nm.HeaderRecord(None, None, None, None, file_name)
-    readings = dict() # readings nested by NMI then channel
-    trans = dict() # transactions nested by NMI then channel
-    nmi_d = None # current NMI details block that readings apply to
+    readings = dict()  # readings nested by NMI then channel
+    trans = dict()  # transactions nested by NMI then channel
+    nmi_d = None  # current NMI details block that readings apply to
 
     for i, row in enumerate(nem_list):
         record_indicator = int(row[0])
@@ -88,8 +94,10 @@ def parse_nem_rows(nem_list, file_name=None) -> nm.NEMFile:
 
         elif header.version_header == 'NEM12' and record_indicator == 300:
             num_intervals = int(24 * 60 / nmi_d.interval_length)
-            assert len(row) > num_intervals, "Incomplete 300 Row in {}".format(file_name)
-            interval_record = parse_300_row(row, nmi_d.interval_length, nmi_d.uom)
+            assert len(row) > num_intervals, "Incomplete 300 Row in {}".format(
+                file_name)
+            interval_record = parse_300_row(
+                row, nmi_d.interval_length, nmi_d.uom)
             # don't flatten the list of interval readings at this stage,
             # as they may need to be adjusted by a 400 row
             readings[nmi_d.nmi][nmi_d.nmi_suffix].append(
@@ -137,7 +145,7 @@ def parse_nem_rows(nem_list, file_name=None) -> nm.NEMFile:
     return nm.NEMFile(header, readings, trans)
 
 
-def calculate_manual_reading(basic_data) -> nm.Reading:
+def calculate_manual_reading(basic_data: nm.BasicMeterData) -> nm.Reading:
     """ Calculate the interval between two manual readings """
     t_start = basic_data.previous_register_read_datetime
     t_end = basic_data.current_register_read_datetime
@@ -230,13 +238,14 @@ def parse_interval_records(interval_record, interval_date, interval,
     """
     interval_delta = datetime.timedelta(minutes=interval)
     return [nm.Reading(t_start=interval_date + (i * interval_delta),
-                       t_end=interval_date + (i * interval_delta) + interval_delta,
+                       t_end=interval_date +
+                       (i * interval_delta) + interval_delta,
                        read_value=parse_reading(val),
                        uom=uom, quality_method=quality_method,
-                       event_code="", # event is unknown at time of reading
-                       event_desc="", # event is unknown at time of reading
-                       read_start=None, read_end=None # No before and after readings for intervals
-                      )
+                       event_code="",  # event is unknown at time of reading
+                       event_desc="",  # event is unknown at time of reading
+                       read_start=None, read_end=None  # No before and after readings for intervals
+                       )
             for i, val in enumerate(interval_record)]
 
 
