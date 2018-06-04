@@ -13,7 +13,7 @@ import nemreader as nr
 m = nr.read_nem_file(file_path)
 ```
 
-Then retreive the data for the NMI and channels of interest:
+Then retreive the data for the NMI and suffix (channel) of interest:
 ```python
 > print(m.header)
 HeaderRecord(version_header='NEM12', datetime=datetime.datetime(2004, 4, 20, 13, 0), from_participant='MDA1', to_participant='Ret1')
@@ -23,10 +23,13 @@ Transactions: {'CCCC123456': {'E1': []}}
 
 > for nmi in m.readings:
 >     for channel in m.readings[nmi]:
->         for reading in m.readings[nmi][channel][-1:]:
+>         for reading in m.readings[nmi][suffix][-1:]:
 >             print(reading)
 Reading(t_start=datetime.datetime(2004, 4, 17, 23, 30), t_end=datetime.datetime(2004, 4, 18, 0, 0), read_value=14.733, uom='kWh', quality_method='S14', event='', read_start=None, read_end=None)
 ```
+
+Standard suffix/channels are defined in the [National Metering Identifier Procedure](https://www.aemo.com.au/Electricity/National-Electricity-Market-NEM/Retail-and-metering/-/media/EBA9363B984841079712B3AAD374A859.ashx).
+
 
 ## Changing Formats
 
