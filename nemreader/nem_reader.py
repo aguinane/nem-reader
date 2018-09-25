@@ -20,7 +20,7 @@ def flatten_list(l: List[list]) -> list:
 
 
 def read_nem_file(file_path: str) -> nm.NEMFile:
-    """ Read in NEM file and return meter readings named tuple 
+    """ Read in NEM file and return meter readings named tuple
 
     :param file_path: The NEM file to process
     :returns: The file that was created
@@ -64,9 +64,8 @@ def parse_nem_rows(nem_list: Iterable, file_name=None) -> nm.NEMFile:
         if record_indicator == 100:
             header = parse_100_row(row, file_name)
             if header.version_header not in ['NEM12', 'NEM13']:
-                raise ValueError(
-                    "Invalid NEM version {}".format(header.version_header)
-                )
+                raise ValueError("Invalid NEM version {}".format(
+                    header.version_header))
 
         elif record_indicator == 900:
             for nmi in readings:
@@ -96,19 +95,17 @@ def parse_nem_rows(nem_list: Iterable, file_name=None) -> nm.NEMFile:
             num_intervals = int(24 * 60 / nmi_d.interval_length)
             assert len(row) > num_intervals, "Incomplete 300 Row in {}".format(
                 file_name)
-            interval_record = parse_300_row(
-                row, nmi_d.interval_length, nmi_d.uom)
+            interval_record = parse_300_row(row, nmi_d.interval_length,
+                                            nmi_d.uom)
             # don't flatten the list of interval readings at this stage,
             # as they may need to be adjusted by a 400 row
             readings[nmi_d.nmi][nmi_d.nmi_suffix].append(
-                interval_record.interval_values
-            )
+                interval_record.interval_values)
 
         elif header.version_header == 'NEM12' and record_indicator == 400:
             event_record = parse_400_row(row)
             readings[nmi_d.nmi][nmi_d.nmi_suffix][-1] = update_reading_events(
-                readings[nmi_d.nmi][nmi_d.nmi_suffix][-1], event_record
-            )
+                readings[nmi_d.nmi][nmi_d.nmi_suffix][-1], event_record)
 
         elif header.version_header == 'NEM12' and record_indicator == 500:
             b2b_details = parse_500_row(row)
@@ -133,15 +130,12 @@ def parse_nem_rows(nem_list: Iterable, file_name=None) -> nm.NEMFile:
             if nmi_d.nmi_suffix not in trans[nmi_d.nmi]:
                 trans[nmi_d.nmi][nmi_d.nmi_suffix] = []
 
-            readings[nmi_d.nmi][nmi_d.nmi_suffix].append(
-                [reading]
-            )
+            readings[nmi_d.nmi][nmi_d.nmi_suffix].append([reading])
 
         else:
             logging.warning(
                 "Record indicator %s not supported and was skipped",
-                record_indicator
-            )
+                record_indicator)
     return nm.NEMFile(header, readings, trans)
 
 
@@ -156,59 +150,36 @@ def calculate_manual_reading(basic_data: nm.BasicMeterData) -> nm.Reading:
     uom = basic_data.uom
     quality_method = basic_data.current_quality_method
 
-    return nm.Reading(t_start, t_end,
-                      value,
-                      uom, quality_method, "", "",
+    return nm.Reading(t_start, t_end, value, uom, quality_method, "", "",
                       read_start, read_end)
 
 
 def parse_100_row(row: list, file_name: str) -> nm.HeaderRecord:
     """ Parse header record (100) """
-    return nm.HeaderRecord(row[1],
-                           parse_datetime(row[2]),
-                           row[3],
-                           row[4],
-                           file_name,
-                           )
+    return nm.HeaderRecord(
+        row[1],
+        parse_datetime(row[2]),
+        row[3],
+        row[4],
+        file_name,
+    )
 
 
 def parse_200_row(row: list) -> nm.NmiDetails:
     """ Parse NMI data details record (200) """
-    return nm.NmiDetails(row[1],
-                         row[2],
-                         row[3],
-                         row[4],
-                         row[5],
-                         row[6],
-                         row[7],
-                         int(row[8]),
-                         parse_datetime(row[9]))
+    return nm.NmiDetails(row[1], row[2], row[3], row[4], row[5], row[6],
+                         row[7], int(row[8]), parse_datetime(row[9]))
 
 
 def parse_250_row(row: list) -> nm.BasicMeterData:
     """ Parse basic meter data record (250) """
-    return nm.BasicMeterData(row[1],
-                             row[2],
-                             row[3],
-                             row[4],
-                             row[5],
-                             row[6],
-                             row[7],
-                             float(row[8]),
-                             parse_datetime(row[9]),
-                             row[10],
-                             row[11],
-                             row[12],
-                             float(row[13]),
-                             parse_datetime(row[14]),
-                             row[15],
-                             row[16],
-                             row[17],
-                             float(row[18]),
-                             row[19],
-                             row[20],
-                             parse_datetime(row[21]),
-                             parse_datetime(row[22]))
+    return nm.BasicMeterData(row[1], row[2], row[3], row[4], row[5],
+                             row[6], row[7], float(row[8]),
+                             parse_datetime(row[9]), row[10], row[11], row[12],
+                             float(row[13]), parse_datetime(
+                                 row[14]), row[15], row[16], row[17],
+                             float(row[18]), row[19], row[20],
+                             parse_datetime(row[21]), parse_datetime(row[22]))
 
 
 def parse_300_row(row: list, interval: int, uom: str) -> nm.IntervalRecord:
@@ -220,33 +191,33 @@ def parse_300_row(row: list, interval: int, uom: str) -> nm.IntervalRecord:
     quality_method = row[last_interval]
 
     interval_values = parse_interval_records(
-        row[2:last_interval], interval_date, interval, uom, quality_method
-    )
+        row[2:last_interval], interval_date, interval, uom, quality_method)
 
-    return nm.IntervalRecord(interval_date,
-                             interval_values,
-                             row[last_interval + 0],
-                             row[last_interval + 1],
+    return nm.IntervalRecord(interval_date, interval_values,
+                             row[last_interval + 0], row[last_interval + 1],
                              row[last_interval + 2],
                              parse_datetime(row[last_interval + 3]),
                              parse_datetime(row[last_interval + 4]))
 
 
-def parse_interval_records(interval_record, interval_date, interval,
-                           uom, quality_method):
+def parse_interval_records(interval_record, interval_date, interval, uom,
+                           quality_method):
     """ Convert interval values into tuples with datetime
     """
     interval_delta = datetime.timedelta(minutes=interval)
-    return [nm.Reading(t_start=interval_date + (i * interval_delta),
-                       t_end=interval_date +
-                       (i * interval_delta) + interval_delta,
-                       read_value=parse_reading(val),
-                       uom=uom, quality_method=quality_method,
-                       event_code="",  # event is unknown at time of reading
-                       event_desc="",  # event is unknown at time of reading
-                       read_start=None, read_end=None  # No before and after readings for intervals
-                       )
-            for i, val in enumerate(interval_record)]
+    return [
+        nm.Reading(
+            t_start=interval_date + (i * interval_delta),
+            t_end=interval_date + (i * interval_delta) + interval_delta,
+            read_value=parse_reading(val),
+            uom=uom,
+            quality_method=quality_method,
+            event_code="",  # event is unknown at time of reading
+            event_desc="",  # event is unknown at time of reading
+            read_start=None,
+            read_end=None  # No before and after readings for intervals
+        ) for i, val in enumerate(interval_record)
+    ]
 
 
 def parse_reading(val: str) -> float:
@@ -261,11 +232,7 @@ def parse_reading(val: str) -> float:
 def parse_400_row(row: list) -> tuple:
     """ Interval event record (400) """
 
-    return nm.EventRecord(int(row[1]),
-                          int(row[2]),
-                          row[3],
-                          row[4],
-                          row[5])
+    return nm.EventRecord(int(row[1]), int(row[2]), row[3], row[4], row[5])
 
 
 def update_reading_events(readings, event_record):
@@ -274,15 +241,16 @@ def update_reading_events(readings, event_record):
     """
     # event intervals are 1-indexed
     for i in range(event_record.start_interval - 1, event_record.end_interval):
-        readings[i] = nm.Reading(t_start=readings[i].t_start,
-                                 t_end=readings[i].t_end,
-                                 read_value=readings[i].read_value,
-                                 uom=readings[i].uom,
-                                 quality_method=event_record.quality_method,
-                                 event_code=event_record.reason_code,
-                                 event_desc=event_record.reason_description,
-                                 read_start=readings[i].read_start,
-                                 read_end=readings[i].read_end)
+        readings[i] = nm.Reading(
+            t_start=readings[i].t_start,
+            t_end=readings[i].t_end,
+            read_value=readings[i].read_value,
+            uom=readings[i].uom,
+            quality_method=event_record.quality_method,
+            event_code=event_record.reason_code,
+            event_desc=event_record.reason_description,
+            read_start=readings[i].read_start,
+            read_end=readings[i].read_end)
     return readings
 
 
@@ -303,4 +271,5 @@ def parse_datetime(record: str) -> datetime.datetime:
     if record == '':
         return None
     else:
-        return datetime.datetime.strptime(record.strip(), format_strings[len(record.strip())])
+        return datetime.datetime.strptime(record.strip(),
+                                          format_strings[len(record.strip())])

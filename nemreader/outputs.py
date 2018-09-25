@@ -8,7 +8,6 @@ import csv
 from nemreader import read_nem_file
 
 
-
 def output_as_csv(file_name, nmi=None, output_file=None):
     """
     Transpose all channels and output a csv that is easier
@@ -19,7 +18,7 @@ def output_as_csv(file_name, nmi=None, output_file=None):
     :param output_file: Specify different output location
     :returns: The file that was created
     """
-    
+
     m = read_nem_file(file_name)
     if nmi is None:
         nmi = list(m.readings.keys())[0]  # Use first NMI
@@ -28,11 +27,12 @@ def output_as_csv(file_name, nmi=None, output_file=None):
     num_records = len(m.readings[nmi][channels[0]])
     last_date = m.readings[nmi][channels[0]][-1].t_end
     if output_file is None:
-        output_file = '{}_{}_transposed.csv'.format(nmi, last_date.strftime('%Y%m%d'))
+        output_file = '{}_{}_transposed.csv'.format(
+            nmi, last_date.strftime('%Y%m%d'))
     with open(output_file, 'w', newline='') as csvfile:
-        cwriter = csv.writer(csvfile, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        heading_list = ['period_start','period_end']
+        cwriter = csv.writer(
+            csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        heading_list = ['period_start', 'period_end']
         for channel in channels:
             heading_list.append(channel)
         heading_list.append('quality_method')

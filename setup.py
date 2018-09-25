@@ -20,7 +20,8 @@ setup(
     name='nemreader',
     packages=['nemreader'],
     version='0.2.2',
-    description='Parse NEM12 (interval metering data) and NEM13 (accumulated metering data) data files ',
+    description=
+    'Parse NEM12 (interval metering data) and NEM13 (accumulated metering data) data files ',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='aguinane',
