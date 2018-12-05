@@ -5,17 +5,42 @@
 """
 
 from collections import namedtuple
+from datetime import datetime
+from typing import NamedTuple, Optional, Any
 
-Reading = namedtuple('Reading', [
-    't_start', 't_end', 'read_value', 'uom', 'quality_method', 'event_code',
-    'event_desc', 'read_start', 'read_end'
-])
 
-NmiDetails = namedtuple('NmiDetails', [
-    'nmi', 'nmi_configuration', 'register_id', 'nmi_suffix',
-    'mdm_datastream_identifier', 'meter_serial_number', 'uom',
-    'interval_length', 'next_scheduled_read_date'
-])
+class NEMFile(NamedTuple):
+    """ Represents a meter reading """
+    header: Any
+    readings: Any
+    transactions: Any
+
+
+class Reading(NamedTuple):
+    """ Represents a meter reading """
+    t_start: datetime
+    t_end: datetime
+    read_value: float
+    uom: str
+    quality_method: Optional[str]
+    event_code: Optional[str]
+    event_desc: Optional[str]
+    read_start: Optional[datetime]
+    read_end: Optional[datetime]
+
+
+class NmiDetails(NamedTuple):
+    """ Represents meter metadata """
+    nmi: str
+    nmi_configuration: str
+    register_id: str
+    nmi_suffix: str
+    mdm_datastream_identifier: str
+    meter_serial_number: str
+    uom: str
+    interval_length: int
+    next_scheduled_read_date: datetime
+
 
 HeaderRecord = namedtuple('HeaderRecord', [
     'version_header',
@@ -54,5 +79,3 @@ B2BDetails13 = namedtuple('B2BDetails13', [
     'previous_trans_code', 'previous_ret_service_order', 'current_trans_code',
     'current_ret_service_order'
 ])
-
-NEMFile = namedtuple('NEMFile', ['header', 'readings', 'transactions'])
