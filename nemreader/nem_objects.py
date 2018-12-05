@@ -11,13 +11,6 @@ from typing import NamedTuple
 from typing import Optional, Any, List
 
 
-class NEMFile(NamedTuple):
-    """ Represents a meter reading """
-    header: Any
-    readings: Any
-    transactions: Any
-
-
 class HeaderRecord(NamedTuple):
     """ Header record (100) """
     version_header: str
@@ -114,3 +107,11 @@ class B2BDetails13(NamedTuple):
     previous_ret_service_order: str
     current_trans_code: str
     current_ret_service_order: str
+
+
+class NEMFile(NamedTuple):
+    """ Represents a meter reading """
+    header: HeaderRecord
+    readings: dict
+    transactions: dict
+

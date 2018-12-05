@@ -19,7 +19,7 @@ except FileNotFoundError:
 setup(
     name='nemreader',
     packages=['nemreader'],
-    version='0.2.2',
+    version='0.3.0',
     description=
     'Parse NEM12 (interval metering data) and NEM13 (accumulated metering data) data files ',
     long_description=long_description,
