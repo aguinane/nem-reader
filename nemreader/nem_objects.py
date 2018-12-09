@@ -4,107 +4,114 @@
     Define named tuple data classes
 """
 
+
+from datetime import datetime
 from collections import namedtuple
-
-Reading = namedtuple(
-    'Reading',
-    ['t_start', 't_end',
-     'read_value',
-     'uom', 'quality_method', 'event_code', 'event_desc',
-     'read_start', 'read_end']
-)
+from typing import NamedTuple
+from typing import Optional, Any, List
 
 
-NmiDetails = namedtuple(
-    'NmiDetails',
-    ['nmi',
-     'nmi_configuration',
-     'register_id',
-     'nmi_suffix',
-     'mdm_datastream_identifier',
-     'meter_serial_number',
-     'uom',
-     'interval_length',
-     'next_scheduled_read_date']
-)
+class HeaderRecord(NamedTuple):
+    """ Header record (100) """
+    version_header: str
+    creation_date: Optional[datetime]
+    from_participant: str
+    to_participant: str
+    file_name: str
 
 
-HeaderRecord = namedtuple(
-    'HeaderRecord',
-    ['version_header',
-     'datetime',
-     'from_participant',
-     'to_participant',
-     'file_name',
-     ]
-)
+class NmiDetails(NamedTuple):
+    """ NMI data details record (200)"""
+    nmi: str
+    nmi_configuration: str
+    register_id: str
+    nmi_suffix: str
+    mdm_datastream_identifier: str
+    meter_serial_number: str
+    uom: str
+    interval_length: int
+    next_scheduled_read_date: Optional[datetime]
 
 
-IntervalRecord = namedtuple(
-    'IntervalRecord',
-    ['interval_data',
-     'interval_values',
-     'quality_method',
-     'reason_code',
-     'reason_description',
-     'update_datetime',
-     'msats_load_datatime']
-)
+class Reading(NamedTuple):
+    """ Represents a meter reading """
+    t_start: datetime
+    t_end: datetime
+    read_value: float
+    uom: str
+    quality_method: Optional[str]
+    event_code: Optional[str]
+    event_desc: Optional[str]
+    read_start: Optional[datetime]
+    read_end: Optional[datetime]
 
 
-EventRecord = namedtuple(
-    'IntervalRecord',
-    ['start_interval',
-     'end_interval',
-     'quality_method',
-     'reason_code',
-     'reason_description']
-)
+class BasicMeterData(NamedTuple):
+    """ Basic meter data record (250) """
+    nmi: str
+    nmi_configuration: str
+    register_id: str
+    nmi_suffix: str
+    mdm_data_stream_identifier: str
+    meter_serial_number: str
+    direction_indicator: str
+    previous_register_read: str
+    previous_register_read_datetime: Optional[datetime]
+    previous_quality_method: str
+    previous_reason_code: int
+    previous_reason_description: str
+    current_register_read: str
+    current_register_read_datetime: Optional[datetime]
+    current_quality_method: str
+    current_reason_code: int
+    current_reason_description: str
+    quantity: float
+    uom: str
+    next_scheduled_read_date: Optional[datetime]
+    update_datetime: Optional[datetime]
+    msats_load_datetime: Optional[datetime]
 
 
-BasicMeterData = namedtuple(
-    'BasicMeterData',
-    ['nmi',
-     'nmi_configuration',
-     'register_id',
-     'nmi_suffix',
-     'mdm_data_stream_identifier',
-     'meter_serial_number',
-     'direction_indicator',
-     'previous_register_read',
-     'previous_register_read_datetime',
-     'previous_quality_method',
-     'previous_reason_code',
-     'previous_reason_description',
-     'current_register_read',
-     'current_register_read_datetime',
-     'current_quality_method',
-     'current_reason_code',
-     'current_reason_description',
-     'quantity',
-     'uom',
-     'next_scheduled_read_date',
-     'update_datetime',
-     'msats_load_datetime']
-)
+class IntervalRecord(NamedTuple):
+    """ Interval data record (300) """
 
-B2BDetails12 = namedtuple(
-    'B2BDetails12',
-    ['trans_code',
-     'ret_service_order',
-     'read_datetime',
-     'index_read']
+    interval_date: Optional[datetime]
+    interval_values: List[Reading]
+    quality_method: str
+    reason_code: str
+    reason_description: str
+    update_datetime: Optional[datetime]
+    msats_load_datatime: Optional[datetime]
 
-)
 
-B2BDetails13 = namedtuple(
-    'B2BDetails13',
-    ['previous_trans_code',
-     'previous_ret_service_order',
-     'current_trans_code',
-     'current_ret_service_order']
-)
+class EventRecord(NamedTuple):
+    """ Interval event record (400) """
+    start_interval: int
+    end_interval: int
+    quality_method: str
+    reason_code: str
+    reason_description: str
 
-NEMFile = namedtuple(
-    'NEMFile', ['header', 'readings', 'transactions']
-)
+
+class B2BDetails12(NamedTuple):
+    """ B2B details record (500) """
+    trans_code: str
+    ret_service_order: str
+    read_datetime: Optional[datetime]
+    index_read: str
+
+
+class B2BDetails13(NamedTuple):
+    """ B2B details record (550) """
+    previous_trans_code: str
+    previous_ret_service_order: str
+    current_trans_code: str
+    current_ret_service_order: str
+
+
+class NEMFile(NamedTuple):
+    """ Represents a meter reading """
+    header: HeaderRecord
+    readings: dict
+    transactions: dict
+

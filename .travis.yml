@@ -3,10 +3,10 @@ language: python
 python:
   - "3.6"
 # command to run tests
-install: 
+install:
   - pip install tox-travis coveralls
 script: tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)
 after_success:
   - coveralls
 notifications:
-  email: false  
+  email: false

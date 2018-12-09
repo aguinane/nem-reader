@@ -4,8 +4,8 @@
 import pytest
 import os
 import sys
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0,
+                os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import nemreader as nr
 
 
@@ -22,8 +22,8 @@ def test_unzipped_examples():
 def test_nem12_examples():
     """ Open and parse zipped NEM12 example files """
     skips = [
-            'NEM12#Scenario10#ETSAMDP#NEMMCO.zip', # 300 Row has new line
-            ]
+        'NEM12#Scenario10#ETSAMDP#NEMMCO.zip',  # 300 Row has new line
+    ]
     test_path = os.path.abspath('examples/nem12')
     for file_name in os.listdir(test_path):
         if file_name in skips:

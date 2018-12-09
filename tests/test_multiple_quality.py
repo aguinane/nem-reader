@@ -4,13 +4,14 @@
 import pytest
 import os
 import sys
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0,
+                os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import nemreader as nr
 
 
 def test_correct_records():
-    meter_data = nr.read_nem_file('examples/unzipped/Example_NEM12_multiple_quality.csv')
+    meter_data = nr.read_nem_file(
+        'examples/unzipped/Example_NEM12_multiple_quality.csv')
     readings = meter_data.readings['CCCC123456']['E1']
     assert len(readings) == 48
     assert readings[0].read_value == pytest.approx(18.023, 0.1)
@@ -18,7 +19,8 @@ def test_correct_records():
 
 
 def test_correct_quality():
-    meter_data = nr.read_nem_file('examples/unzipped/Example_NEM12_multiple_quality.csv')
+    meter_data = nr.read_nem_file(
+        'examples/unzipped/Example_NEM12_multiple_quality.csv')
     readings = meter_data.readings['CCCC123456']['E1']
     assert readings[0].quality_method == 'F14'
     assert readings[10].quality_method == 'F14'
@@ -29,4 +31,3 @@ def test_correct_quality():
     assert readings[25].quality_method == 'S14'
     assert readings[30].quality_method == 'S14'
     assert readings[47].quality_method == 'S14'
-
