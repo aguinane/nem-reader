@@ -207,12 +207,12 @@ def parse_300_row(row: list, interval: int, uom: str, meter_serial_number: str) 
                                              quality_method,
                                              meter_serial_number)
     return IntervalRecord(interval_date, interval_values,
-                             row[last_interval + 0],
-                             meter_serial_number,
-                             row[last_interval + 1],
-                             row[last_interval + 2],
-                             parse_datetime(row[last_interval + 3]),
-                             parse_datetime(row[last_interval + 4]))
+                          row[last_interval + 0],
+                          meter_serial_number,
+                          row[last_interval + 1],
+                          row[last_interval + 2],
+                          parse_datetime(row[last_interval + 3]),
+                          parse_datetime(row[last_interval + 4]))
 
 
 def parse_interval_records(interval_record, interval_date, interval, uom,
