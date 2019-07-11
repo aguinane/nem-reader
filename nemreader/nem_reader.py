@@ -97,7 +97,7 @@ def parse_nem_rows(nem_list: Iterable, file_name=None) -> NEMFile:
             assert len(row) > num_intervals, "Incomplete 300 Row in {}".format(
                 file_name)
             interval_record = parse_300_row(row, nmi_d.interval_length,
-                                            nmi_d.uom)
+                                            nmi_d.uom, nmi_d.meter_serial_number)
             # don't flatten the list of interval readings at this stage,
             # as they may need to be adjusted by a 400 row
             readings[nmi_d.nmi][nmi_d.nmi_suffix].append(
@@ -148,11 +148,20 @@ def calculate_manual_reading(basic_data: BasicMeterData) -> Reading:
     read_end = basic_data.current_register_read
     value = basic_data.quantity
 
+    meter_serial_number = basic_data.meter_serial_number
     uom = basic_data.uom
     quality_method = basic_data.current_quality_method
 
-    return Reading(t_start, t_end, value, uom, quality_method, "", "",
-                      read_start, read_end)
+    return Reading(t_start,
+                   t_end,
+                   value,
+                   uom,
+                   meter_serial_number,
+                   quality_method,
+                   "",
+                   "",
+                   read_start,
+                   read_end)
 
 
 def parse_100_row(row: list, file_name: str) -> HeaderRecord:
@@ -183,7 +192,7 @@ def parse_250_row(row: list) -> BasicMeterData:
                              parse_datetime(row[21]), parse_datetime(row[22]))
 
 
-def parse_300_row(row: list, interval: int, uom: str) -> IntervalRecord:
+def parse_300_row(row: list, interval: int, uom: str, meter_serial_number: str) -> IntervalRecord:
     """ Interval data record (300) """
 
     num_intervals = int(24 * 60 / interval)
@@ -191,18 +200,23 @@ def parse_300_row(row: list, interval: int, uom: str) -> IntervalRecord:
     last_interval = 2 + num_intervals
     quality_method = row[last_interval]
 
-    interval_values = parse_interval_records(
-        row[2:last_interval], interval_date, interval, uom, quality_method)
-
+    interval_values = parse_interval_records(row[2:last_interval],
+                                             interval_date,
+                                             interval,
+                                             uom,
+                                             quality_method,
+                                             meter_serial_number)
     return IntervalRecord(interval_date, interval_values,
-                             row[last_interval + 0], row[last_interval + 1],
-                             row[last_interval + 2],
-                             parse_datetime(row[last_interval + 3]),
-                             parse_datetime(row[last_interval + 4]))
+                          row[last_interval + 0],
+                          meter_serial_number,
+                          row[last_interval + 1],
+                          row[last_interval + 2],
+                          parse_datetime(row[last_interval + 3]),
+                          parse_datetime(row[last_interval + 4]))
 
 
 def parse_interval_records(interval_record, interval_date, interval, uom,
-                           quality_method) -> List[Reading]:
+                           quality_method, meter_serial_number) -> List[Reading]:
     """ Convert interval values into tuples with datetime
     """
     interval_delta = timedelta(minutes=interval)
@@ -213,6 +227,7 @@ def parse_interval_records(interval_record, interval_date, interval, uom,
             read_value=parse_reading(val),
             uom=uom,
             quality_method=quality_method,
+            meter_serial_number=meter_serial_number,
             event_code="",  # event is unknown at time of reading
             event_desc="",  # event is unknown at time of reading
             read_start=None,
@@ -247,6 +262,7 @@ def update_reading_events(readings, event_record):
             t_end=readings[i].t_end,
             read_value=readings[i].read_value,
             uom=readings[i].uom,
+            meter_serial_number=readings[i].meter_serial_number,
             quality_method=event_record.quality_method,
             event_code=event_record.reason_code,
             event_desc=event_record.reason_description,

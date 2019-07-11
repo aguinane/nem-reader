@@ -39,6 +39,7 @@ class Reading(NamedTuple):
     t_end: datetime
     read_value: float
     uom: str
+    meter_serial_number: str
     quality_method: Optional[str]
     event_code: Optional[str]
     event_desc: Optional[str]
@@ -78,6 +79,7 @@ class IntervalRecord(NamedTuple):
     interval_date: Optional[datetime]
     interval_values: List[Reading]
     quality_method: str
+    meter_serial_number: str
     reason_code: str
     reason_description: str
     update_datetime: Optional[datetime]
