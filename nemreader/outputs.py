@@ -36,16 +36,20 @@ def output_as_csv(file_name, nmi=None, output_file=None):
         for channel in channels:
             heading_list.append(channel)
         heading_list.append('quality_method')
+        heading_list.append('event')
         cwriter.writerow(heading_list)
 
         for i in range(0, num_records):
             t_start = m.readings[nmi][channels[0]][i].t_start
             t_end = m.readings[nmi][channels[0]][i].t_end
             quality_method = m.readings[nmi][channels[0]][i].quality_method
+            event_code = m.readings[nmi][channels[0]][i].event_code
+            event_desc = m.readings[nmi][channels[0]][i].event_desc
             row_list = [t_start, t_end]
             for ch in channels:
                 val = m.readings[nmi][ch][i].read_value
                 row_list.append(val)
             row_list.append(quality_method)
+            row_list.append(f'{event_code} {event_desc}')
             cwriter.writerow(row_list)
     return output_file
