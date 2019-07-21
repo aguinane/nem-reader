@@ -6,13 +6,13 @@
 
 
 from datetime import datetime
-from collections import namedtuple
 from typing import NamedTuple
-from typing import Optional, Any, List
+from typing import Optional, List
 
 
 class HeaderRecord(NamedTuple):
     """ Header record (100) """
+
     version_header: str
     creation_date: Optional[datetime]
     from_participant: str
@@ -22,6 +22,7 @@ class HeaderRecord(NamedTuple):
 
 class NmiDetails(NamedTuple):
     """ NMI data details record (200)"""
+
     nmi: str
     nmi_configuration: str
     register_id: str
@@ -35,6 +36,7 @@ class NmiDetails(NamedTuple):
 
 class Reading(NamedTuple):
     """ Represents a meter reading """
+
     t_start: datetime
     t_end: datetime
     read_value: float
@@ -49,6 +51,7 @@ class Reading(NamedTuple):
 
 class BasicMeterData(NamedTuple):
     """ Basic meter data record (250) """
+
     nmi: str
     nmi_configuration: str
     register_id: str
@@ -88,6 +91,7 @@ class IntervalRecord(NamedTuple):
 
 class EventRecord(NamedTuple):
     """ Interval event record (400) """
+
     start_interval: int
     end_interval: int
     quality_method: str
@@ -97,6 +101,7 @@ class EventRecord(NamedTuple):
 
 class B2BDetails12(NamedTuple):
     """ B2B details record (500) """
+
     trans_code: str
     ret_service_order: str
     read_datetime: Optional[datetime]
@@ -105,6 +110,7 @@ class B2BDetails12(NamedTuple):
 
 class B2BDetails13(NamedTuple):
     """ B2B details record (550) """
+
     previous_trans_code: str
     previous_ret_service_order: str
     current_trans_code: str
@@ -113,7 +119,7 @@ class B2BDetails13(NamedTuple):
 
 class NEMFile(NamedTuple):
     """ Represents a meter reading """
+
     header: HeaderRecord
     readings: dict
     transactions: dict
-
