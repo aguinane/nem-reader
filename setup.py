@@ -19,14 +19,14 @@ except FileNotFoundError:
 
 setup(
     name="nemreader",
-    version="0.3.0",
+    version="0.3.1",
     description="Parse NEM12 (interval metering data) and NEM13 (accumulated metering data) data files ",
     packages=find_packages(exclude=["contrib", "docs", "tests*"]),
     python_requires=">=3.4",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    author="aguinane",
-    author_email="alexguinane@gmail.com",
+    author="Alex Guinman",
+    author_email="alex@guinman.id.au",
     url="https://github.com/aguinane/nem-reader",
     keywords=["energy", "NEM12", "NEM13"],
     classifiers=[
