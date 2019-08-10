@@ -1,6 +1,13 @@
 import nemreader as nr
 
 
+def output_file():
+
+    from nemreader import output_as_csv
+    file_name = 'example.csv'
+    output_file = output_as_csv(file_name)
+
+
 def print_meter_record(file_path, rows=5):
     """ Output readings for specified number of rows to console """
     m = nr.read_nem_file(file_path)
@@ -13,7 +20,8 @@ def print_meter_record(file_path, rows=5):
                 print('', reading)
 
 
-if __name__ == '__main__':
+def print_examples():
+
     print('Example NEM12 - Actual Interval:')
     print('-' * 10)
     print_meter_record('examples/Example_NEM12_actual_interval.csv', 5)
@@ -50,3 +58,7 @@ if __name__ == '__main__':
     print('-' * 10)
     print_meter_record('examples/NEM12#NEM1201005Scenario1#GLOBALM#NEMMCO.ZIP',
                        5)
+
+if __name__ == '__main__':
+    output_file()
+    #print_examples()
