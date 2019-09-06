@@ -177,17 +177,33 @@ def parse_100_row(row: list, file_name: str) -> HeaderRecord:
 
 def parse_200_row(row: list) -> NmiDetails:
     """ Parse NMI data details record (200) """
-    return NmiDetails(
-        row[1],
-        row[2],
-        row[3],
-        row[4],
-        row[5],
-        row[6],
-        row[7],
-        int(row[8]),
-        parse_datetime(row[9]),
-    )
+    if len(row) == 9:
+        return NmiDetails(
+            row[1],
+            row[2],
+            row[3],
+            row[4],
+            row[5],
+            row[6],
+            row[7],
+            int(row[8]),
+            "",
+        )
+    elif len(row) == 10:
+        return NmiDetails(
+            row[1],
+            row[2],
+            row[3],
+            row[4],
+            row[5],
+            row[6],
+            row[7],
+            int(row[8]),
+            parse_datetime(row[9]),  # this is non mandatory.
+        )
+    else:
+        raise ValueError(f"Invalid number of arguments in 200 row.\
+                         Received {len(row)}, but should be 9 or 10")
 
 
 def parse_250_row(row: list) -> BasicMeterData:
