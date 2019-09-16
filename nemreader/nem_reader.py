@@ -177,6 +177,11 @@ def parse_100_row(row: list, file_name: str) -> HeaderRecord:
 
 def parse_200_row(row: list) -> NmiDetails:
     """ Parse NMI data details record (200) """
+
+    next_read = None  # Next scheduled read is an optional field
+    if len(row) > 9:
+        next_read = parse_datetime(row[9])
+
     return NmiDetails(
         row[1],
         row[2],
@@ -186,7 +191,7 @@ def parse_200_row(row: list) -> NmiDetails:
         row[6],
         row[7],
         int(row[8]),
-        parse_datetime(row[9]),
+        next_read,
     )
 
 
