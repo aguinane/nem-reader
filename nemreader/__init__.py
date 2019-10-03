@@ -5,9 +5,21 @@
     NEM13 (accumulated metering data) data files
 """
 
+import logging
+from logging import NullHandler
 
+from .version import __version__
 from .nem_reader import read_nem_file, parse_nem_file
-from .nem_reader import parse_nem_rows
 from .outputs import output_as_csv
+from .outputs import nmis_in_file
 
-__all__ = ["read_nem_file", "parse_nem_file", "parse_nem_rows", "output_as_csv"]
+__all__ = [
+    "__version__",
+    "read_nem_file",
+    "parse_nem_file",
+    "output_as_csv",
+    "nmis_in_file",
+]
+
+# Set default logging handler to avoid "No handler found" warnings.
+logging.getLogger(__name__).addHandler(NullHandler())
