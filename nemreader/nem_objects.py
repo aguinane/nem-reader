@@ -7,7 +7,7 @@
 
 from datetime import datetime
 from typing import NamedTuple
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 
 class HeaderRecord(NamedTuple):
@@ -121,5 +121,5 @@ class NEMFile(NamedTuple):
     """ Represents a meter reading """
 
     header: HeaderRecord
-    readings: dict
-    transactions: dict
+    readings: Dict[str, Dict[str, List[Reading]]]
+    transactions: Dict[str, Dict[str, list]]

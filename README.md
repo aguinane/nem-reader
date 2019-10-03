@@ -2,7 +2,7 @@
 
 [![PyPI version](https://badge.fury.io/py/nemreader.svg)](https://badge.fury.io/py/nemreader) [![Build Status](https://travis-ci.org/aguinane/nem-reader.svg?branch=master)](https://travis-ci.org/aguinane/nem-reader) [![Coverage Status](https://coveralls.io/repos/github/aguinane/nem-reader/badge.svg)](https://coveralls.io/github/aguinane/nem-reader)
 
-The Australian Energy Market Operator (AEMO) defines a [Meter Data File Format (MDFF)](https://www.aemo.com.au/Stakeholder-Consultation/Consultations/Meter-Data-File-Format-Specification-NEM12-and-NEM13) for reading energy billing data. 
+The Australian Energy Market Operator (AEMO) defines a [Meter Data File Format (MDFF)](https://www.aemo.com.au/Stakeholder-Consultation/Consultations/Meter-Data-File-Format-Specification-NEM12-and-NEM13) for reading energy billing data.
 This library sets out to parse these NEM12 (interval metering data) and NEM13 (accumulated metering data) data files into a useful python object, for use in other projects.
 
 ## Usage
@@ -23,7 +23,7 @@ HeaderRecord(version_header='NEM12', creation_date=datetime.datetime(2004, 4, 20
 ```
 
 Standard suffix/channels are defined in the [National Metering Identifier Procedure](https://www.aemo.com.au/-/media/Files/Electricity/NEM/Retail_and_Metering/Metering-Procedures/2018/MSATS-National-Metering-Identifier-Procedure.pdf).
-`E1` is the general consumption channel (`11` for NEM13). 
+`E1` is the general consumption channel (`11` for NEM13).
 
 Most importantly, you will want to get the energy data itself:
 
@@ -35,14 +35,12 @@ Most importantly, you will want to get the energy data itself:
 Reading(t_start=datetime.datetime(2004, 4, 17, 23, 30), t_end=datetime.datetime(2004, 4, 18, 0, 0), read_value=14.733, uom='kWh', quality_method='S14', event='', read_start=None, read_end=None)
 ```
 
-## Transpose to CSV
+## Command Line Usage
 
 You can also output the NEM file in a more human readable format:
 
-```python
-from nemreader import output_as_csv
-file_name = 'examples/unzipped/Example_NEM12_actual_interval.csv'
-output_file = output_as_csv(file_name)
+```shell
+nemreader output example.zip
 ```
 
 Which outputs transposed values to a csv file for all channels:

@@ -13,4 +13,4 @@ def test_csv_output(tmpdir):
     """ Create a temporary csv output """
     file_name = "examples/unzipped/Example_NEM12_actual_interval.csv"
     output_files = output_as_csv(file_name, output_dir=tmpdir)
-    assert "" in output_files
+    assert len(output_files) == 1

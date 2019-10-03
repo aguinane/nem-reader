@@ -10,6 +10,12 @@ from os import path
 
 here = path.abspath(path.dirname(__file__))
 
+# Get the version information
+about = {}
+ver_path = path.join(here, "nemreader", "version.py")
+with open(ver_path) as ver_file:
+    exec(ver_file.read(), about)
+
 # Get the long description from the README file
 try:
     with open(path.join(here, "README.md"), encoding="utf-8") as f:
@@ -19,7 +25,7 @@ except FileNotFoundError:
 
 setup(
     name="nemreader",
-    version="0.3.1",
+    version=about["__version__"],
     description="Parse NEM12 (interval metering data) and NEM13 (accumulated metering data) data files ",
     packages=find_packages(exclude=["contrib", "docs", "tests*"]),
     python_requires=">=3.6",
@@ -34,6 +40,11 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    install_requires=["click"],
     tests_require=["pytest", "pytest-runner"],
     license="MIT",
+    entry_points="""
+        [console_scripts]
+        nemreader=nemreader.cli:cli
+    """,
 )
