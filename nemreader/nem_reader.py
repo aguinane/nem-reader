@@ -9,10 +9,13 @@ import csv
 import logging
 from datetime import datetime, timedelta
 import zipfile
-from typing import List, Iterable, Optional
+from typing import Iterable, Any
+from typing import Optional, List, Dict
 from .nem_objects import NEMFile, HeaderRecord, NmiDetails
 from .nem_objects import Reading, BasicMeterData, IntervalRecord, EventRecord
 from .nem_objects import B2BDetails12, B2BDetails13
+
+log = logging.getLogger(__name__)
 
 
 def flatten_list(l: List[list]) -> list:
@@ -30,6 +33,7 @@ def read_nem_file(file_path: str) -> NEMFile:
 
     _, file_extension = os.path.splitext(file_path)
     if file_extension.lower() == ".zip":
+        log.debug("Extracting zip file")
         with zipfile.ZipFile(file_path, "r") as archive:
             for csv_file in archive.namelist():
                 with archive.open(csv_file) as csv_text:
@@ -37,7 +41,16 @@ def read_nem_file(file_path: str) -> NEMFile:
                     # So decode then convert back to list
                     nmi_file = csv_text.read().decode("utf-8").splitlines()
                     reader = csv.reader(nmi_file, delimiter=",")
-                    return parse_nem_rows(reader, file_name=csv_file)
+                    first_row = next(reader, None)
+                    header = parse_header_row(first_row, file_name=csv_file)
+                    if header.version_header == "NEM12":
+                        return parse_nem12_rows(
+                            reader, header=header, file_name=csv_file
+                        )
+                    else:
+                        return parse_nem13_rows(
+                            reader, header=header, file_name=csv_file
+                        )
 
     with open(file_path) as nmi_file:
         return parse_nem_file(nmi_file)
@@ -46,40 +59,58 @@ def read_nem_file(file_path: str) -> NEMFile:
 def parse_nem_file(nem_file) -> NEMFile:
     """ Parse NEM file and return meter readings named tuple """
     reader = csv.reader(nem_file, delimiter=",")
-    return parse_nem_rows(reader, file_name=nem_file)
+    first_row = next(reader, None)
+    header = parse_header_row(first_row, file_name=nem_file.name)
+    if header.version_header == "NEM12":
+        return parse_nem12_rows(reader, header=header, file_name=nem_file)
+    return parse_nem13_rows(reader, header=header, file_name=nem_file)
 
 
-def parse_nem_rows(nem_list: Iterable, file_name=None) -> NEMFile:
+def parse_header_row(row: List[Any], file_name=None) -> HeaderRecord:
+    """ Parse first row of NEM file """
+
+    record_indicator = int(row[0])
+    if record_indicator != 100:
+        raise ValueError("NEM Files must start with a 100 row")
+
+    header = parse_100_row(row, file_name)
+    if header.version_header not in ["NEM12", "NEM13"]:
+        raise ValueError("Invalid NEM version {}".format(header.version_header))
+
+    log.debug("Parsing %s file %s ...", header.version_header, file_name)
+    return header
+
+
+def parse_100_row(row: List[Any], file_name: str) -> HeaderRecord:
+    """ Parse header record (100) """
+    return HeaderRecord(row[1], parse_datetime(row[2]), row[3], row[4], file_name)
+
+
+def parse_nem12_rows(
+    nem_list: Iterable, header: HeaderRecord, file_name=None
+) -> NEMFile:
     """ Parse NEM row iterator and return meter readings named tuple """
-
-    header = HeaderRecord("", None, "", "", file_name)
-    readings = dict()  # readings nested by NMI then channel
-    trans = dict()  # transactions nested by NMI then channel
+    # readings nested by NMI then channel
+    readings: Dict[str, Dict[str, List[Reading]]] = {}
+    # transactions nested by NMI then channel
+    trans: Dict[str, Dict[str, list]] = {}
     nmi_d = None  # current NMI details block that readings apply to
 
-    for i, row in enumerate(nem_list):
+    for row in nem_list:
         record_indicator = int(row[0])
 
-        if i == 0 and record_indicator != 100:
-            raise ValueError("NEM Files must start with a 100 row")
-
-        if record_indicator == 100:
-            header = parse_100_row(row, file_name)
-            if header.version_header not in ["NEM12", "NEM13"]:
-                raise ValueError("Invalid NEM version {}".format(header.version_header))
-
-        elif record_indicator == 900:
+        if record_indicator == 900:
             for nmi in readings:
                 for suffix in readings[nmi]:
                     readings[nmi][suffix] = flatten_list(readings[nmi][suffix])
             break  # End of file
 
-        elif header.version_header == "NEM12" and record_indicator == 200:
+        elif record_indicator == 200:
             try:
                 nmi_details = parse_200_row(row)
             except ValueError:
-                logging.error("Error passing 200 row:")
-                logging.error(row)
+                log.error("Error passing 200 row:")
+                log.error(row)
                 raise
             nmi_d = nmi_details
 
@@ -92,7 +123,7 @@ def parse_nem_rows(nem_list: Iterable, file_name=None) -> NEMFile:
             if nmi_d.nmi_suffix not in trans[nmi_d.nmi]:
                 trans[nmi_d.nmi][nmi_d.nmi_suffix] = []
 
-        elif header.version_header == "NEM12" and record_indicator == 300:
+        elif record_indicator == 300:
             num_intervals = int(24 * 60 / nmi_d.interval_length)
             assert len(row) > num_intervals, "Incomplete 300 Row in {}".format(
                 file_name
@@ -106,21 +137,47 @@ def parse_nem_rows(nem_list: Iterable, file_name=None) -> NEMFile:
                 interval_record.interval_values
             )
 
-        elif header.version_header == "NEM12" and record_indicator == 400:
+        elif record_indicator == 400:
             event_record = parse_400_row(row)
             readings[nmi_d.nmi][nmi_d.nmi_suffix][-1] = update_reading_events(
                 readings[nmi_d.nmi][nmi_d.nmi_suffix][-1], event_record
             )
 
-        elif header.version_header == "NEM12" and record_indicator == 500:
+        elif record_indicator == 500:
             b2b_details = parse_500_row(row)
             trans[nmi_d.nmi][nmi_d.nmi_suffix].append(b2b_details)
 
-        elif header.version_header == "NEM13" and record_indicator == 550:
+        else:
+            log.warning(
+                "Record indicator %s not supported and was skipped", record_indicator
+            )
+    return NEMFile(header, readings, trans)
+
+
+def parse_nem13_rows(
+    nem_list: Iterable, header: HeaderRecord, file_name=None
+) -> NEMFile:
+    """ Parse NEM row iterator and return meter readings named tuple """
+    # readings nested by NMI then channel
+    readings: Dict[str, Dict[str, List[Reading]]] = {}
+    # transactions nested by NMI then channel
+    trans: Dict[str, Dict[str, list]] = {}
+    nmi_d = None  # current NMI details block that readings apply to
+
+    for row in nem_list:
+        record_indicator = int(row[0])
+
+        if record_indicator == 900:
+            for nmi in readings:
+                for suffix in readings[nmi]:
+                    readings[nmi][suffix] = flatten_list(readings[nmi][suffix])
+            break  # End of file
+
+        elif record_indicator == 550:
             b2b_details = parse_550_row(row)
             trans[nmi_d.nmi][nmi_d.nmi_suffix].append(b2b_details)
 
-        elif header.version_header == "NEM13" and record_indicator == 250:
+        elif record_indicator == 250:
             basic_data = parse_250_row(row)
             reading = calculate_manual_reading(basic_data)
 
@@ -138,7 +195,7 @@ def parse_nem_rows(nem_list: Iterable, file_name=None) -> NEMFile:
             readings[nmi_d.nmi][nmi_d.nmi_suffix].append([reading])
 
         else:
-            logging.warning(
+            log.warning(
                 "Record indicator %s not supported and was skipped", record_indicator
             )
     return NEMFile(header, readings, trans)
@@ -170,11 +227,6 @@ def calculate_manual_reading(basic_data: BasicMeterData) -> Reading:
     )
 
 
-def parse_100_row(row: list, file_name: str) -> HeaderRecord:
-    """ Parse header record (100) """
-    return HeaderRecord(row[1], parse_datetime(row[2]), row[3], row[4], file_name)
-
-
 def parse_200_row(row: list) -> NmiDetails:
     """ Parse NMI data details record (200) """
 
@@ -183,15 +235,7 @@ def parse_200_row(row: list) -> NmiDetails:
         next_read = parse_datetime(row[9])
 
     return NmiDetails(
-        row[1],
-        row[2],
-        row[3],
-        row[4],
-        row[5],
-        row[6],
-        row[7],
-        int(row[8]),
-        next_read,
+        row[1], row[2], row[3], row[4], row[5], row[6], row[7], int(row[8]), next_read
     )
 
 
@@ -294,7 +338,7 @@ def parse_reading(val: str) -> Optional[float]:
     try:
         return float(val)
     except ValueError:
-        logging.warning('Reading of "%s" is not a number', val)
+        log.warning('Reading of "%s" is not a number', val)
         return None  # Not a valid reading
 
 
