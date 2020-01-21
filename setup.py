@@ -41,7 +41,7 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=["click"],
+    install_requires=["click", "pandas"],
     tests_require=["pytest", "pytest-runner"],
     license="MIT",
     entry_points="""
