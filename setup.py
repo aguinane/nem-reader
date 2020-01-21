@@ -28,6 +28,7 @@ setup(
     version=about["__version__"],
     description="Parse NEM12 (interval metering data) and NEM13 (accumulated metering data) data files ",
     packages=find_packages(exclude=["contrib", "docs", "tests*"]),
+    include_package_data=True,
     python_requires=">=3.6",
     long_description=long_description,
     long_description_content_type="text/markdown",
