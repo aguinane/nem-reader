@@ -9,6 +9,7 @@ import csv
 import logging
 from datetime import datetime, timedelta
 import zipfile
+from itertools import chain, islice
 from typing import Iterable, Any
 from typing import Optional, List, Dict
 from .nem_objects import NEMFile, HeaderRecord, NmiDetails
@@ -24,10 +25,11 @@ def flatten_list(l: List[list]) -> list:
     return [v for inner_l in l for v in inner_l]
 
 
-def read_nem_file(file_path: str) -> NEMFile:
+def read_nem_file(file_path: str, ignore_missing_header=False) -> NEMFile:
     """ Read in NEM file and return meter readings named tuple
 
     :param file_path: The NEM file to process
+    :param ignore_missing_header: Whether to continue parsing if missing header. Will assume NEM12 format.
     :returns: The file that was created
     """
 
@@ -40,42 +42,50 @@ def read_nem_file(file_path: str) -> NEMFile:
                     # Zip file is open in binary mode
                     # So decode then convert back to list
                     nmi_file = csv_text.read().decode("utf-8").splitlines()
-                    reader = csv.reader(nmi_file, delimiter=",")
-                    first_row = next(reader, None)
-                    header = parse_header_row(first_row, file_name=csv_file)
-                    if header.version_header == "NEM12":
-                        return parse_nem12_rows(
-                            reader, header=header, file_name=csv_file
-                        )
-                    else:
-                        return parse_nem13_rows(
-                            reader, header=header, file_name=csv_file
-                        )
+
+                    return parse_nem_file(nmi_file, file_name=csv_file, ignore_missing_header=ignore_missing_header)
 
     with open(file_path) as nmi_file:
-        return parse_nem_file(nmi_file)
+        return parse_nem_file(nmi_file, ignore_missing_header=ignore_missing_header)
 
 
-def parse_nem_file(nem_file) -> NEMFile:
+def parse_nem_file(nem_file, file_name='', ignore_missing_header=False) -> NEMFile:
     """ Parse NEM file and return meter readings named tuple """
     reader = csv.reader(nem_file, delimiter=",")
     first_row = next(reader, None)
-    header = parse_header_row(first_row, file_name=nem_file.name)
+
+    # Some Powercor/Citipower files have empty line at start, skip if so.
+    if not first_row:
+        first_row = next(reader, None)
+
+    header = parse_header_row(first_row,
+                              ignore_missing_header=ignore_missing_header,
+                              file_name=getattr(nem_file, 'name', file_name))
+
+    if header.assumed:
+        # If header wasn't there, we have to parse the first row again so we don't miss any data.
+        reader = chain([first_row], reader)
+        return parse_nem12_rows(reader, header=header, file_name=nem_file)
     if header.version_header == "NEM12":
         return parse_nem12_rows(reader, header=header, file_name=nem_file)
-    return parse_nem13_rows(reader, header=header, file_name=nem_file)
+    else:
+        return parse_nem13_rows(reader, header=header, file_name=nem_file)
 
 
-def parse_header_row(row: List[Any], file_name=None) -> HeaderRecord:
+def parse_header_row(row: List[Any], ignore_missing_header=False, file_name=None) -> HeaderRecord:
     """ Parse first row of NEM file """
 
     record_indicator = int(row[0])
     if record_indicator != 100:
-        raise ValueError("NEM Files must start with a 100 row")
-
-    header = parse_100_row(row, file_name)
-    if header.version_header not in ["NEM12", "NEM13"]:
-        raise ValueError("Invalid NEM version {}".format(header.version_header))
+        if ignore_missing_header:
+            log.warning("Missing header (100) row, assuming NEM12.")
+            header = HeaderRecord("NEM12", None, "", "", file_name, True)
+        else:
+            raise ValueError("NEM Files must start with a 100 row")
+    else:
+        header = parse_100_row(row, file_name)
+        if header.version_header not in ["NEM12", "NEM13"]:
+            raise ValueError("Invalid NEM version {}".format(header.version_header))
 
     log.debug("Parsing %s file %s ...", header.version_header, file_name)
     return header
@@ -83,7 +93,7 @@ def parse_header_row(row: List[Any], file_name=None) -> HeaderRecord:
 
 def parse_100_row(row: List[Any], file_name: str) -> HeaderRecord:
     """ Parse header record (100) """
-    return HeaderRecord(row[1], parse_datetime(row[2]), row[3], row[4], file_name)
+    return HeaderRecord(row[1], parse_datetime(row[2]), row[3], row[4], file_name, False)
 
 
 def parse_nem12_rows(
@@ -96,14 +106,23 @@ def parse_nem12_rows(
     trans: Dict[str, Dict[str, list]] = {}
     nmi_d = None  # current NMI details block that readings apply to
 
+    observed_900_record = False
+
     for row in nem_list:
+
+        if not row:
+            log.debug("Skipping empty row.")
+            continue
+
         record_indicator = int(row[0])
 
         if record_indicator == 900:
-            for nmi in readings:
-                for suffix in readings[nmi]:
-                    readings[nmi][suffix] = flatten_list(readings[nmi][suffix])
-            break  # End of file
+            # Powercor NEM12 files can concatenate multiple files together, try to keep parsing anyway.
+            if observed_900_record:
+                log.warning("Found multiple end of data (900) rows. ")
+
+            observed_900_record = True
+            pass
 
         elif record_indicator == 200:
             try:
@@ -151,6 +170,14 @@ def parse_nem12_rows(
             log.warning(
                 "Record indicator %s not supported and was skipped", record_indicator
             )
+
+    for nmi in readings:
+        for suffix in readings[nmi]:
+            readings[nmi][suffix] = flatten_list(readings[nmi][suffix])
+
+    if not observed_900_record:
+        log.warning('Missing end of data (900) row.')
+
     return NEMFile(header, readings, trans)
 
 
@@ -267,6 +294,11 @@ def parse_250_row(row: list) -> BasicMeterData:
     )
 
 
+def nth(iterable, n, default=None):
+    "Returns the nth item or a default value"
+    return next(islice(iterable, n, None), default)
+
+
 def parse_300_row(
     row: list, interval: int, uom: str, meter_serial_number: str
 ) -> IntervalRecord:
@@ -276,10 +308,12 @@ def parse_300_row(
     interval_date = parse_datetime(row[1])
     last_interval = 2 + num_intervals
     quality_method = row[last_interval]
-    reason_code = row[last_interval + 1]
-    reason_desc = row[last_interval + 2]
-    update_datetime = parse_datetime(row[last_interval + 3])
-    msats_load_datatime = parse_datetime(row[last_interval + 4])
+
+    # Optional fields
+    reason_code = nth(row, last_interval + 1, "")
+    reason_desc = nth(row, last_interval + 2, "")
+    update_datetime = parse_datetime(nth(row, last_interval + 3, None))
+    msats_load_datatime = parse_datetime(nth(row, last_interval + 4, None))
 
     interval_values = parse_interval_records(
         row[2:last_interval],
@@ -383,6 +417,14 @@ def parse_datetime(record: str) -> Optional[datetime]:
     """ Parse a datetime string into a python datetime object """
     # NEM defines Date8, DateTime12 and DateTime14
     format_strings = {8: "%Y%m%d", 12: "%Y%m%d%H%M", 14: "%Y%m%d%H%M%S"}
-    if record == "":
+
+    if record == "" or record is None:
         return None
-    return datetime.strptime(record.strip(), format_strings[len(record.strip())])
+
+    try:
+        timestamp = datetime.strptime(record.strip(), format_strings[len(record.strip())])
+    except (ValueError, KeyError) as e:
+        log.debug(f"Malformed date '{record}' ")
+        return None
+
+    return timestamp

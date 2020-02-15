@@ -18,6 +18,7 @@ class HeaderRecord(NamedTuple):
     from_participant: str
     to_participant: str
     file_name: str
+    assumed: bool
 
 
 class NmiDetails(NamedTuple):
