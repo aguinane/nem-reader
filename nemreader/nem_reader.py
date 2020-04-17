@@ -43,13 +43,17 @@ def read_nem_file(file_path: str, ignore_missing_header=False) -> NEMFile:
                     # So decode then convert back to list
                     nmi_file = csv_text.read().decode("utf-8").splitlines()
 
-                    return parse_nem_file(nmi_file, file_name=csv_file, ignore_missing_header=ignore_missing_header)
+                    return parse_nem_file(
+                        nmi_file,
+                        file_name=csv_file,
+                        ignore_missing_header=ignore_missing_header,
+                    )
 
     with open(file_path) as nmi_file:
         return parse_nem_file(nmi_file, ignore_missing_header=ignore_missing_header)
 
 
-def parse_nem_file(nem_file, file_name='', ignore_missing_header=False) -> NEMFile:
+def parse_nem_file(nem_file, file_name="", ignore_missing_header=False) -> NEMFile:
     """ Parse NEM file and return meter readings named tuple """
     reader = csv.reader(nem_file, delimiter=",")
     first_row = next(reader, None)
@@ -58,9 +62,11 @@ def parse_nem_file(nem_file, file_name='', ignore_missing_header=False) -> NEMFi
     if not first_row:
         first_row = next(reader, None)
 
-    header = parse_header_row(first_row,
-                              ignore_missing_header=ignore_missing_header,
-                              file_name=getattr(nem_file, 'name', file_name))
+    header = parse_header_row(
+        first_row,
+        ignore_missing_header=ignore_missing_header,
+        file_name=getattr(nem_file, "name", file_name),
+    )
 
     if header.assumed:
         # If header wasn't there, we have to parse the first row again so we don't miss any data.
@@ -72,7 +78,9 @@ def parse_nem_file(nem_file, file_name='', ignore_missing_header=False) -> NEMFi
         return parse_nem13_rows(reader, header=header, file_name=nem_file)
 
 
-def parse_header_row(row: List[Any], ignore_missing_header=False, file_name=None) -> HeaderRecord:
+def parse_header_row(
+    row: List[Any], ignore_missing_header=False, file_name=None
+) -> HeaderRecord:
     """ Parse first row of NEM file """
 
     record_indicator = int(row[0])
@@ -93,7 +101,9 @@ def parse_header_row(row: List[Any], ignore_missing_header=False, file_name=None
 
 def parse_100_row(row: List[Any], file_name: str) -> HeaderRecord:
     """ Parse header record (100) """
-    return HeaderRecord(row[1], parse_datetime(row[2]), row[3], row[4], file_name, False)
+    return HeaderRecord(
+        row[1], parse_datetime(row[2]), row[3], row[4], file_name, False
+    )
 
 
 def parse_nem12_rows(
@@ -176,7 +186,7 @@ def parse_nem12_rows(
             readings[nmi][suffix] = flatten_list(readings[nmi][suffix])
 
     if not observed_900_record:
-        log.warning('Missing end of data (900) row.')
+        log.warning("Missing end of data (900) row.")
 
     return NEMFile(header, readings, trans)
 
@@ -422,7 +432,9 @@ def parse_datetime(record: str) -> Optional[datetime]:
         return None
 
     try:
-        timestamp = datetime.strptime(record.strip(), format_strings[len(record.strip())])
+        timestamp = datetime.strptime(
+            record.strip(), format_strings[len(record.strip())]
+        )
     except (ValueError, KeyError) as e:
         log.debug(f"Malformed date '{record}' ")
         return None

@@ -20,7 +20,7 @@ __all__ = [
     "parse_nem_file",
     "nmis_in_file",
     "output_as_csv",
-    "output_as_data_frames"
+    "output_as_data_frames",
 ]
 
 # Set default logging handler to avoid "No handler found" warnings.
