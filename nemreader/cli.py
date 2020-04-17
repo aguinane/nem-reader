@@ -2,11 +2,12 @@ import logging
 import click
 from nemreader import nmis_in_file
 from nemreader import output_as_csv
-
+from nemreader import __version__
 LOG_FORMAT = "%(asctime)s %(levelname)-8s %(message)s"
 
 
 @click.group()
+@click.version_option(version=__version__, prog_name='nemreader')
 def cli():
     """nemreader
 
