@@ -11,6 +11,7 @@ from logging import NullHandler
 from .version import __version__
 from .nem_reader import read_nem_file, parse_nem_file
 from .outputs import output_as_csv
+from .outputs import output_as_daily_csv
 from .outputs import nmis_in_file
 from .outputs import output_as_data_frames
 
@@ -20,6 +21,7 @@ __all__ = [
     "parse_nem_file",
     "nmis_in_file",
     "output_as_csv",
+    "output_as_daily_csv",
     "output_as_data_frames",
 ]
 

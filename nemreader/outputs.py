@@ -9,7 +9,6 @@ import logging
 import csv
 from typing import Generator, Tuple, List, Dict, Any
 from pathlib import Path
-import pandas as pd
 from .nem_objects import Reading
 from .nem_reader import read_nem_file
 
@@ -62,6 +61,8 @@ def flatten_rows(
 def output_as_data_frames(file_name):
     """ Return list of data frames for each NMI """
 
+    import pandas as pd
+
     m = read_nem_file(file_name)
     nmis = list(m.readings.keys())
     data_frames = []
@@ -104,3 +105,72 @@ def output_as_csv(file_name, output_dir="."):
         log.debug("Created %s", output_path)
         output_paths.append(output_path)
     return output_paths
+
+
+def flatten_daily_rows(
+    nmi: str, nmi_transactions: Dict[str, list], nmi_readings: Dict[str, List[Reading]]
+) -> List[list]:
+    """ Create flattened list of NMI reading data """
+
+    channels = list(nmi_transactions.keys())
+
+    rows = []
+
+    for ch in channels:
+        daily_totals = {}
+        uom = ""
+        sn = ""
+        for read in nmi_readings[ch]:
+            t_end = read.t_end
+            val = read.read_value
+            uom = read.uom  # Only last value will be saved
+            sn = read.meter_serial_number
+            t_day = t_end.strftime("%Y%m%d")
+            try:
+                daily_totals[t_day] += val
+            except KeyError:
+                daily_totals[t_day] = val
+
+        for day in daily_totals.keys():
+            day_total = daily_totals[day]
+            row: List[Any] = [nmi, sn, day, ch, day_total, uom]
+            rows.append(row)
+    return rows
+
+
+def output_as_daily_csv(file_name, output_dir="."):
+    """
+    Transpose all channels and output a daily csv that is easier
+    to read and do charting on
+
+    :param file_name: The NEM file to process
+    :param output_dir: Specify different output location
+    :returns: The file that was created
+    """
+
+    output_dir = Path(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
+
+    output_file = "{}_daily_totals.csv".format(file_name)
+    output_path = output_dir / output_file
+
+    m = read_nem_file(file_name)
+    nmis = m.readings.keys()
+    all_rows = []
+    headings = ["nmi", "meter_sn", "day", "channel", "day_total", "uom"]
+    for nmi in nmis:
+        rows = flatten_daily_rows(nmi, m.transactions[nmi], m.readings[nmi])
+        for row in rows:
+            all_rows.append(row)
+
+    with open(output_path, "w", newline="") as csvfile:
+        cwriter = csv.writer(
+            csvfile, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
+        )
+        cwriter.writerow(headings)
+        for row in all_rows:
+            cwriter.writerow(row)
+
+    log.debug("Created %s", output_path)
+
+    return output_path

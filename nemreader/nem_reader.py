@@ -29,7 +29,8 @@ def read_nem_file(file_path: str, ignore_missing_header=False) -> NEMFile:
     """ Read in NEM file and return meter readings named tuple
 
     :param file_path: The NEM file to process
-    :param ignore_missing_header: Whether to continue parsing if missing header. Will assume NEM12 format.
+    :param ignore_missing_header: Whether to continue parsing if missing header. 
+                                  Will assume NEM12 format.
     :returns: The file that was created
     """
 
@@ -69,7 +70,7 @@ def parse_nem_file(nem_file, file_name="", ignore_missing_header=False) -> NEMFi
     )
 
     if header.assumed:
-        # If header wasn't there, we have to parse the first row again so we don't miss any data.
+        # We have to parse the first row again so we don't miss any data.
         reader = chain([first_row], reader)
         return parse_nem12_rows(reader, header=header, file_name=nem_file)
     if header.version_header == "NEM12":
@@ -127,7 +128,8 @@ def parse_nem12_rows(
         record_indicator = int(row[0])
 
         if record_indicator == 900:
-            # Powercor NEM12 files can concatenate multiple files together, try to keep parsing anyway.
+            # Powercor NEM12 files can concatenate multiple files together
+            # try to keep parsing anyway.
             if observed_900_record:
                 log.warning("Found multiple end of data (900) rows. ")
 
@@ -435,7 +437,7 @@ def parse_datetime(record: str) -> Optional[datetime]:
         timestamp = datetime.strptime(
             record.strip(), format_strings[len(record.strip())]
         )
-    except (ValueError, KeyError) as e:
+    except (ValueError, KeyError):
         log.debug(f"Malformed date '{record}' ")
         return None
 

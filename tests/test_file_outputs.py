@@ -1,7 +1,5 @@
-""" Test Suite
-"""
+""" Test Suite """
 
-import pytest
 import os
 import sys
 
