@@ -94,17 +94,22 @@ def output_as_csv(file_name, output_dir="."):
         last_date = rows[-1][1]
         output_file = "{}_{}_transposed.csv".format(nmi, last_date.strftime("%Y%m%d"))
         output_path = output_dir / output_file
-        with open(output_path, "w", newline="") as csvfile:
-            cwriter = csv.writer(
-                csvfile, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
-            )
-            cwriter.writerow(headings)
-            for row in rows:
-                cwriter.writerow(row)
-
-        log.debug("Created %s", output_path)
+        save_to_csv(headings, rows, output_path)
         output_paths.append(output_path)
     return output_paths
+
+
+def save_to_csv(headings: List[str], rows: List[list], output_path):
+    """ save data to csv file """
+    with open(output_path, "w", newline="") as csvfile:
+        cwriter = csv.writer(
+            csvfile, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
+        )
+        cwriter.writerow(headings)
+        for row in rows:
+            cwriter.writerow(row)
+    log.debug("Created %s", output_path)
+    return output_path
 
 
 def flatten_and_group_rows(
@@ -185,14 +190,6 @@ def output_as_daily_csv(file_name, output_dir="."):
         for row in rows:
             all_rows.append(row)
 
-    with open(output_path, "w", newline="") as csvfile:
-        cwriter = csv.writer(
-            csvfile, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
-        )
-        cwriter.writerow(headings)
-        for row in all_rows:
-            cwriter.writerow(row)
-
-    log.debug("Created %s", output_path)
+    save_to_csv(headings, all_rows, output_path)
 
     return output_path
