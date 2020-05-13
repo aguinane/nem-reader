@@ -107,8 +107,11 @@ def output_as_csv(file_name, output_dir="."):
     return output_paths
 
 
-def flatten_daily_rows(
-    nmi: str, nmi_transactions: Dict[str, list], nmi_readings: Dict[str, List[Reading]]
+def flatten_and_group_rows(
+    nmi: str,
+    nmi_transactions: Dict[str, list],
+    nmi_readings: Dict[str, List[Reading]],
+    date_format: str = "%Y%m%d",
 ) -> List[list]:
     """ Create flattened list of NMI reading data """
 
@@ -117,8 +120,8 @@ def flatten_daily_rows(
     rows = []
 
     for ch in channels:
-        daily_totals = {}
-        daily_qualities = {}
+        date_totals = {}
+        date_qualities = {}
         uom = ""
         sn = ""
         for read in nmi_readings[ch]:
@@ -127,19 +130,19 @@ def flatten_daily_rows(
             uom = read.uom  # Only last value will be saved
             sn = read.meter_serial_number
             quality = read.quality_method
-            t_day = t_end.strftime("%Y%m%d")
+            t_group = t_end.strftime(date_format)
             try:
-                daily_totals[t_day] += val
+                date_totals[t_group] += val
             except KeyError:
-                daily_totals[t_day] = val
+                date_totals[t_group] = val
 
-            if t_day not in daily_qualities.keys():
-                daily_qualities[t_day] = set()
-            daily_qualities[t_day].add(quality)
+            if t_group not in date_qualities.keys():
+                date_qualities[t_group] = set()
+            date_qualities[t_group].add(quality)
 
-        for day in daily_totals.keys():
-            day_total = daily_totals[day]
-            qualities = list(daily_qualities[day])
+        for day in date_totals.keys():
+            day_total = date_totals[day]
+            qualities = list(date_qualities[day])
             day_quality = "".join(qualities)
             if len(day_quality) > 1:
                 day_quality = "V"  # Multiple quality methods
@@ -178,7 +181,7 @@ def output_as_daily_csv(file_name, output_dir="."):
         "quality_method",
     ]
     for nmi in nmis:
-        rows = flatten_daily_rows(nmi, m.transactions[nmi], m.readings[nmi])
+        rows = flatten_and_group_rows(nmi, m.transactions[nmi], m.readings[nmi])
         for row in rows:
             all_rows.append(row)
 

@@ -32,12 +32,11 @@ jobs:
       run: |
         pip install pytest
         pip install pytest-cov
-        pytest --cov=nemreader --cov-report=xml        
+        pytest --cov=nemreader --cov-report=xml
     - name: Coveralls
       env:
         COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
       run: |
         pip install coveralls
-        coverage run --source=nemreader setup.py test
+        coverage run --source=nemreader -m pytest tests/
         coveralls
-        
