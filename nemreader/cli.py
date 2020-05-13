@@ -2,11 +2,14 @@ import logging
 import click
 from nemreader import nmis_in_file
 from nemreader import output_as_csv
+from nemreader import output_as_daily_csv
+from nemreader import __version__
 
 LOG_FORMAT = "%(asctime)s %(levelname)-8s %(message)s"
 
 
 @click.group()
+@click.version_option(version=__version__, prog_name="nemreader")
 def cli():
     """nemreader
 
@@ -48,3 +51,24 @@ def output(nemfile, verbose, outdir):
         logging.basicConfig(level="DEBUG", format=LOG_FORMAT)
     for fname in output_as_csv(nemfile, output_dir=outdir):
         click.echo(f"Created {fname}")
+
+
+@cli.command("output-daily")
+@click.argument("nemfile", type=click.Path(exists=True))
+@click.option("-v", "--verbose", is_flag=True, help="Will print verbose messages.")
+@click.option(
+    "--outdir",
+    "-o",
+    type=click.Path(exists=True),
+    default=".",
+    help="The output folder to save to",
+)
+def output_daily(nemfile, verbose, outdir):
+    """ Output NEM file to transposed CSV.
+
+    NEMFILE is the name of the file to parse.
+    """
+    if verbose:
+        logging.basicConfig(level="DEBUG", format=LOG_FORMAT)
+    fname = output_as_daily_csv(nemfile, output_dir=outdir)
+    click.echo(f"Created {fname}")
