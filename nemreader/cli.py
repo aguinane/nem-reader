@@ -23,8 +23,13 @@ def cli():
 @click.option("-v", "--verbose", is_flag=True, help="Will print verbose messages.")
 def list_nmis(nemfile, verbose):
     """ Output list of NMIs in NEM file """
+
     if verbose:
-        logging.basicConfig(level="DEBUG", format=LOG_FORMAT)
+        log_level = "DEBUG"
+    else:
+        log_level = "WARNING"
+    logging.basicConfig(level=log_level, format=LOG_FORMAT)
+
     nmis = list(nmis_in_file(nemfile))
     click.echo("The following NMI[suffix] exist in this file:")
     for nmi, suffixes in nmis:
@@ -48,7 +53,10 @@ def output(nemfile, verbose, outdir):
     NEMFILE is the name of the file to parse.
     """
     if verbose:
-        logging.basicConfig(level="DEBUG", format=LOG_FORMAT)
+        log_level = "DEBUG"
+    else:
+        log_level = "WARNING"
+    logging.basicConfig(level=log_level, format=LOG_FORMAT)
     for fname in output_as_csv(nemfile, output_dir=outdir):
         click.echo(f"Created {fname}")
 
@@ -69,6 +77,9 @@ def output_daily(nemfile, verbose, outdir):
     NEMFILE is the name of the file to parse.
     """
     if verbose:
-        logging.basicConfig(level="DEBUG", format=LOG_FORMAT)
+        log_level = "DEBUG"
+    else:
+        log_level = "WARNING"
+    logging.basicConfig(level=log_level, format=LOG_FORMAT)
     fname = output_as_daily_csv(nemfile, output_dir=outdir)
     click.echo(f"Created {fname}")
