@@ -29,7 +29,7 @@ def read_nem_file(file_path: str, ignore_missing_header=False) -> NEMFile:
     """ Read in NEM file and return meter readings named tuple
 
     :param file_path: The NEM file to process
-    :param ignore_missing_header: Whether to continue parsing if missing header. 
+    :param ignore_missing_header: Whether to continue parsing if missing header.
                                   Will assume NEM12 format.
     :returns: The file that was created
     """
@@ -156,9 +156,13 @@ def parse_nem12_rows(
 
         elif record_indicator == 300:
             num_intervals = int(24 * 60 / nmi_d.interval_length)
-            assert len(row) > num_intervals, "Incomplete 300 Row in {}".format(
-                file_name
-            )
+            assert len(row) > 1, f"Invalid 300 Row in {file_name}"
+            if len(row) < num_intervals + 2:
+                record_date = row[1]
+                msg = "Skipping 300 record for %s %s %s. "
+                msg += "It does not have the expected %s intervals"
+                log.error(msg, nmi_d.nmi, nmi_d.nmi_suffix, record_date, num_intervals)
+                continue
             interval_record = parse_300_row(
                 row, nmi_d.interval_length, nmi_d.uom, nmi_d.meter_serial_number
             )

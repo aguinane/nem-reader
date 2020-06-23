@@ -51,3 +51,36 @@ period_start,period_end,E1,Q1,quality_method
 2004-02-01 00:30:00,2004-02-01 01:00:00,1.111,2.222,A
 ...
 ```
+
+## Charting
+
+You can easily chart the usage data using pandas:
+
+```python
+import matplotlib.pyplot as plt
+from nemreader import output_as_data_frames
+
+# Setup Pandas DataFrame
+dfs = output_as_data_frames("examples/nem12/NEM12#000000000000002#CNRGYMDP#NEMMCO.zip")
+nmi, df = dfs[0] # Return data for first NMI in file
+df.set_index("period_start", inplace=True)
+
+# Chart time of day profile
+hourly = df.groupby([(df.index.hour)]).sum()
+plot = hourly.plot(title=nmi, kind="bar", y=["E1"])
+plt.show()
+```
+
+!["Time of day plot"](docs/plot_profile.png)
+
+Or even generate a calendar with daily usage totals:
+
+```python
+# Chart daily usage calendar
+import pandas as pd
+import calmap
+plot = calmap.calendarplot(pd.Series(df.E1), daylabels="MTWTFSS")
+plt.show()
+```
+
+!["Calendar Plot"](docs/plot_cal.png)

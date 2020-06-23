@@ -1,17 +1,18 @@
-""" Test Suite
-"""
-
 import pytest
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import nemreader as nr
 
 
 def test_correct_NMIs():
     meter_data = nr.read_nem_file(
-        "examples/unzipped/Example_NEM12_powercor.csv", ignore_missing_header=True
+        "examples/invalid/Example_NEM12_powercor.csv", ignore_missing_header=True
+    )
+    assert len(meter_data.readings) == 1
+    assert "VABD000163" in meter_data.readings
+
+
+def test_incomplete_interval_row():
+    meter_data = nr.read_nem_file(
+        "examples/invalid/Example_NEM12_incomplete_interval.csv"
     )
     assert len(meter_data.readings) == 1
     assert "VABD000163" in meter_data.readings
@@ -19,7 +20,7 @@ def test_correct_NMIs():
 
 def test_correct_channels():
     meter_data = nr.read_nem_file(
-        "examples/unzipped/Example_NEM12_powercor.csv", ignore_missing_header=True
+        "examples/invalid/Example_NEM12_powercor.csv", ignore_missing_header=True
     )
     readings = meter_data.readings["VABD000163"]
     assert len(readings) == 2
@@ -29,7 +30,7 @@ def test_correct_channels():
 
 def test_correct_records():
     meter_data = nr.read_nem_file(
-        "examples/unzipped/Example_NEM12_powercor.csv", ignore_missing_header=True
+        "examples/invalid/Example_NEM12_powercor.csv", ignore_missing_header=True
     )
     readings = meter_data.readings["VABD000163"]
 
@@ -44,12 +45,12 @@ def test_correct_records():
 
 
 def test_zipped_load():
-    meter_data = nr.read_nem_file(
-        "examples/nem12/Example_NEM12_powercor.csv.zip", ignore_missing_header=True
+    nr.read_nem_file(
+        "examples/invalid/Example_NEM12_powercor.csv.zip", ignore_missing_header=True
     )
 
 
 def test_missing_fields():
-    meter_data = nr.read_nem_file(
-        "examples/unzipped/Example_NEM12_powercor.csv", ignore_missing_header=True
+    nr.read_nem_file(
+        "examples/invalid/Example_NEM12_powercor.csv", ignore_missing_header=True
     )

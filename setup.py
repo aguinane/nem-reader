@@ -35,7 +35,7 @@ test_requirements = ["pytest>=3"]
 setup(
     name="nemreader",
     version=about["__version__"],
-    description="Parse NEM12 (interval metering data) and NEM13 (accumulated metering data) data files ",
+    description="Parse NEM12 and NEM13 metering data files",
     packages=find_packages(exclude=["contrib", "docs", "tests*"]),
     include_package_data=True,
     long_description=long_description,
