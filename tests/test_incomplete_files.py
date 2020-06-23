@@ -1,11 +1,4 @@
-""" Test Suite
-"""
-
 import pytest
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import nemreader as nr
 
 
@@ -44,12 +37,12 @@ def test_correct_records():
 
 
 def test_zipped_load():
-    meter_data = nr.read_nem_file(
+    nr.read_nem_file(
         "examples/nem12/Example_NEM12_powercor.csv.zip", ignore_missing_header=True
     )
 
 
 def test_missing_fields():
-    meter_data = nr.read_nem_file(
+    nr.read_nem_file(
         "examples/unzipped/Example_NEM12_powercor.csv", ignore_missing_header=True
     )
