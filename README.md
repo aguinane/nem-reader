@@ -44,7 +44,7 @@ Most importantly, you will want to get the energy data itself:
 
 ```python
 > for nmi in m.readings:
->     for channel in m.readings[nmi]:
+>     for suffix in m.readings[nmi]:
 >         for reading in m.readings[nmi][suffix][-1:]:
 >             print(reading)
 Reading(t_start=datetime.datetime(2004, 4, 17, 23, 30), t_end=datetime.datetime(2004, 4, 18, 0, 0), read_value=14.733, uom='kWh', quality_method='S14', event='', val_start=None, val_end=None)

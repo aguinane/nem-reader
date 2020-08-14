@@ -12,7 +12,7 @@ def test_unzipped_examples():
             continue
         test_file = os.path.join(test_path, file_name)
         meter_data = nr.read_nem_file(test_file)
-        assert meter_data.header.version_header == "NEM12"
+        assert meter_data.header.version_header in ["NEM12", "NEM13"]
 
 
 def test_nem12_examples():
