@@ -5,6 +5,21 @@
 The Australian Energy Market Operator (AEMO) defines a [Meter Data File Format (MDFF)](https://www.aemo.com.au/Stakeholder-Consultation/Consultations/Meter-Data-File-Format-Specification-NEM12-and-NEM13) for reading energy billing data.
 This library sets out to parse these NEM12 (interval metering data) and NEM13 (accumulated metering data) data files into a useful python object, for use in other projects.
 
+## Install
+
+Simply install from pypi:
+
+```sh
+pip3 install nemreader
+```
+
+If you want to run as a command line tool, install extra dependancies.
+
+```sh
+pip3 install nemreader[cli]
+```
+
+
 ## Usage
 
 First, read in the NEM file:
