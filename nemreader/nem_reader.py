@@ -248,8 +248,8 @@ def calculate_manual_reading(basic_data: BasicMeterData) -> Reading:
     """ Calculate the interval between two manual readings """
     t_start = basic_data.previous_register_read_datetime
     t_end = basic_data.current_register_read_datetime
-    read_start = basic_data.previous_register_read
-    read_end = basic_data.current_register_read
+    val_start = basic_data.previous_register_read
+    val_end = basic_data.current_register_read
     value = basic_data.quantity
 
     meter_serial_number = basic_data.meter_serial_number
@@ -265,8 +265,8 @@ def calculate_manual_reading(basic_data: BasicMeterData) -> Reading:
         quality_method,
         "",
         "",
-        read_start,
-        read_end,
+        val_start,
+        val_end,
     )
 
 
@@ -376,8 +376,8 @@ def parse_interval_records(
             meter_serial_number=meter_serial_number,
             event_code=event_code,  # This may get changed later by a 400 row
             event_desc=event_desc,  # This may get changed later by a 400 row
-            read_start=None,
-            read_end=None,  # No before and after readings for intervals
+            val_start=None,
+            val_end=None,  # No before and after readings for intervals
         )
         for i, val in enumerate(interval_record)
     ]
@@ -413,8 +413,8 @@ def update_reading_events(readings, event_record):
             quality_method=event_record.quality_method,
             event_code=event_record.reason_code,
             event_desc=event_record.reason_description,
-            read_start=readings[i].read_start,
-            read_end=readings[i].read_end,
+            val_start=readings[i].val_start,
+            val_end=readings[i].val_end,
         )
     return readings
 

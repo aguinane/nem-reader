@@ -46,8 +46,9 @@ class Reading(NamedTuple):
     quality_method: Optional[str]
     event_code: Optional[str]
     event_desc: Optional[str]
-    read_start: Optional[datetime]
-    read_end: Optional[datetime]
+    # Below attributes relevant for NEM13 only
+    val_start: Optional[float]
+    val_end: Optional[float]
 
 
 class BasicMeterData(NamedTuple):

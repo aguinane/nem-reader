@@ -8,12 +8,11 @@ def test_unzipped_examples():
     skips = ["Example_NEM12_powercor.csv", "Example_NEM12_powercor_missing_fields.csv"]
     test_path = os.path.abspath("examples/unzipped")
     for file_name in os.listdir(test_path):
-        print(file_name)
         if file_name in skips:
             continue
         test_file = os.path.join(test_path, file_name)
         meter_data = nr.read_nem_file(test_file)
-        assert meter_data.header.version_header in ["NEM12", "NEM13"]
+        assert meter_data.header.version_header == "NEM12"
 
 
 def test_nem12_examples():
@@ -28,7 +27,7 @@ def test_nem12_examples():
             continue
         test_file = os.path.join(test_path, file_name)
         meter_data = nr.read_nem_file(test_file)
-        assert meter_data.header.version_header in ["NEM12", "NEM13"]
+        assert meter_data.header.version_header == "NEM12"
 
 
 def test_nem13_examples():
@@ -38,4 +37,4 @@ def test_nem13_examples():
     for file_name in os.listdir(test_path):
         test_file = os.path.join(test_path, file_name)
         meter_data = nr.read_nem_file(test_file)
-        assert meter_data.header.version_header in ["NEM12", "NEM13"]
+        assert meter_data.header.version_header == "NEM13"
