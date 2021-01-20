@@ -20,20 +20,6 @@ with open(ver_path) as ver_file:
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
-# get the dependencies and installs
-with open(path.join(here, "requirements.txt"), encoding="utf-8") as f:
-    all_reqs = f.read().split("\n")
-with open(path.join(here, "requirements.txt"), encoding="utf-8") as f:
-    extra_reqs = f.read().split("\n")
-
-install_requires = [x.strip() for x in all_reqs if "git+" not in x]
-dependency_links = [
-    x.strip().replace("git+", "") for x in all_reqs if x.startswith("git+")
-]
-extras_requires = [x.strip() for x in extra_reqs]
-setup_requirements = ["pytest-runner"]
-test_requirements = ["pytest>=3"]
-
 
 setup(
     name="nemreader",
@@ -52,11 +38,8 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
-    install_requires=install_requires,
-    dependency_links=dependency_links,
-    extras_require={"cli": extras_requires},
-    setup_requires=setup_requirements,
-    tests_require=test_requirements,
+    install_requires=[],
+    extras_require={"cli": ["click", "pandas"]},
     license="MIT",
     entry_points="""
         [console_scripts]
