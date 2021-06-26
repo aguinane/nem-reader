@@ -50,6 +50,13 @@ Most importantly, you will want to get the energy data itself:
 Reading(t_start=datetime.datetime(2004, 4, 17, 23, 30), t_end=datetime.datetime(2004, 4, 18, 0, 0), read_value=14.733, uom='kWh', quality_method='S14', event='', val_start=None, val_end=None)
 ```
 
+Alternatively, you can also return the data as pandas dataframes (one per NMI). 
+
+```python
+from nemreader import output_as_data_frames
+dfs = output_as_data_frames('examples/unzipped/Example_NEM12_actual_interval.csv')
+```
+
 ## Command Line Usage
 
 You can also output the NEM file in a more human readable format:
