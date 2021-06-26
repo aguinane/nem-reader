@@ -24,3 +24,13 @@ def test_data_frame_output():
     for nmi, df in output_dfs:
         assert type(nmi) == str
         assert df["quality_method"][0] == "A"
+
+
+def test_data_frame_output_nem13():
+    """ Create a pandas dataframe """
+    file_name = "examples/unzipped/Example_NEM13_forward_estimate.csv"
+    output_dfs = output_as_data_frames(file_name)
+    for nmi, df in output_dfs:
+        print(df.head())
+        assert type(nmi) == str
+        assert df["quality_method"][0] == "E64"

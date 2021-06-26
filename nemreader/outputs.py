@@ -11,6 +11,7 @@ from typing import Generator, Tuple, List, Dict, Any
 from pathlib import Path
 from .nem_objects import Reading
 from .nem_reader import read_nem_file
+from .split_days import split_multiday_reads
 
 log = logging.getLogger(__name__)
 
@@ -24,11 +25,17 @@ def nmis_in_file(file_name) -> Generator[Tuple[str, List[str]], None, None]:
 
 
 def flatten_rows(
-    nmi_transactions: Dict[str, list], nmi_readings: Dict[str, List[Reading]]
+    nmi_transactions: Dict[str, list],
+    nmi_readings: Dict[str, List[Reading]],
+    split_days: bool = False,
 ) -> Tuple[List[str], List[list]]:
     """ Create flattened list of NMI reading data """
 
     channels = list(nmi_transactions.keys())
+    if split_days:
+        # Split any readings that are >24 hours
+        for ch in channels:
+            nmi_readings[ch] = list(split_multiday_reads(nmi_readings[ch]))
 
     headings = ["period_start", "period_end"]
     for channel in channels:
@@ -58,7 +65,7 @@ def flatten_rows(
     return headings, rows
 
 
-def output_as_data_frames(file_name):
+def output_as_data_frames(file_name, split_days: bool = True):
     """ Return list of data frames for each NMI """
 
     import pandas as pd
@@ -67,7 +74,8 @@ def output_as_data_frames(file_name):
     nmis = list(m.readings.keys())
     data_frames = []
     for nmi in nmis:
-        headings, rows = flatten_rows(m.transactions[nmi], m.readings[nmi])
+        nmi_readings = m.readings[nmi]
+        headings, rows = flatten_rows(m.transactions[nmi], nmi_readings, split_days)
         nmi_df = pd.DataFrame(data=rows, columns=headings)
         data_frames.append((nmi, nmi_df))
 
@@ -122,8 +130,16 @@ def flatten_and_group_rows(
 
     channels = list(nmi_transactions.keys())
 
-    rows = []
+    # Datastream suffix starting with a number are Accumulated Metering Data (NEM13)
+    # Ensure no reading exceeds 24 hours
+    split_required = False
+    for ch in channels:
+        if ch[0].isdigit():
+            split_required = True
+    if split_required:
+        nmi_readings = split_multiday_reads(nmi_readings)
 
+    rows = []
     for ch in channels:
         date_totals = {}
         date_qualities = {}

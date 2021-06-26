@@ -5,6 +5,21 @@
 The Australian Energy Market Operator (AEMO) defines a [Meter Data File Format (MDFF)](https://www.aemo.com.au/Stakeholder-Consultation/Consultations/Meter-Data-File-Format-Specification-NEM12-and-NEM13) for reading energy billing data.
 This library sets out to parse these NEM12 (interval metering data) and NEM13 (accumulated metering data) data files into a useful python object, for use in other projects.
 
+## Install
+
+Simply install from pypi:
+
+```sh
+pip3 install nemreader
+```
+
+If you want to run as a command line tool, install extra dependancies.
+
+```sh
+pip3 install nemreader[cli]
+```
+
+
 ## Usage
 
 First, read in the NEM file:
@@ -29,10 +44,17 @@ Most importantly, you will want to get the energy data itself:
 
 ```python
 > for nmi in m.readings:
->     for channel in m.readings[nmi]:
+>     for suffix in m.readings[nmi]:
 >         for reading in m.readings[nmi][suffix][-1:]:
 >             print(reading)
-Reading(t_start=datetime.datetime(2004, 4, 17, 23, 30), t_end=datetime.datetime(2004, 4, 18, 0, 0), read_value=14.733, uom='kWh', quality_method='S14', event='', read_start=None, read_end=None)
+Reading(t_start=datetime.datetime(2004, 4, 17, 23, 30), t_end=datetime.datetime(2004, 4, 18, 0, 0), read_value=14.733, uom='kWh', quality_method='S14', event='', val_start=None, val_end=None)
+```
+
+Alternatively, you can also return the data as pandas dataframes (one per NMI). 
+
+```python
+from nemreader import output_as_data_frames
+dfs = output_as_data_frames('examples/unzipped/Example_NEM12_actual_interval.csv')
 ```
 
 ## Command Line Usage

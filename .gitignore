@@ -92,3 +92,7 @@ ENV/
 
 .vscode
 .pytest_cache/
+
+# Ignore CSVs unless in example folder
+*.csv
+!examples/*.csv
