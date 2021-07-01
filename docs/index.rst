@@ -11,7 +11,10 @@ This library sets out to parse these NEM12 (interval metering data) and NEM13 (a
    :maxdepth: 2
    :caption: Contents:
    
+   installation
    file-format
+   quickstart
+   
 
 
 
