@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 
 def nmis_in_file(file_name) -> Generator[Tuple[str, List[str]], None, None]:
-    """ Return list of NMIs in file """
+    """Return list of NMIs in file"""
     m = read_nem_file(file_name)
     for nmi in m.transactions.keys():
         suffixes = list(m.transactions[nmi].keys())
@@ -29,7 +29,7 @@ def flatten_rows(
     nmi_readings: Dict[str, List[Reading]],
     split_days: bool = False,
 ) -> Tuple[List[str], List[list]]:
-    """ Create flattened list of NMI reading data """
+    """Create flattened list of NMI reading data"""
 
     channels = list(nmi_transactions.keys())
     if split_days:
@@ -65,12 +65,14 @@ def flatten_rows(
     return headings, rows
 
 
-def output_as_data_frames(file_name, split_days: bool = True):
-    """ Return list of data frames for each NMI """
+def output_as_data_frames(
+    file_name, split_days: bool = True, ignore_missing_header: bool = False
+):
+    """Return list of data frames for each NMI"""
 
     import pandas as pd
 
-    m = read_nem_file(file_name)
+    m = read_nem_file(file_name, ignore_missing_header=ignore_missing_header)
     nmis = list(m.readings.keys())
     data_frames = []
     for nmi in nmis:
@@ -108,7 +110,7 @@ def output_as_csv(file_name, output_dir="."):
 
 
 def save_to_csv(headings: List[str], rows: List[list], output_path):
-    """ save data to csv file """
+    """save data to csv file"""
     with open(output_path, "w", newline="") as csvfile:
         cwriter = csv.writer(
             csvfile, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
@@ -126,7 +128,7 @@ def flatten_and_group_rows(
     nmi_readings: Dict[str, List[Reading]],
     date_format: str = "%Y%m%d",
 ) -> List[list]:
-    """ Create flattened list of NMI reading data """
+    """Create flattened list of NMI reading data"""
 
     channels = list(nmi_transactions.keys())
 
