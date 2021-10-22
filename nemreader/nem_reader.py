@@ -385,6 +385,8 @@ def parse_interval_records(
 
 def parse_reading(val: str) -> Optional[float]:
     """ Convert reading value to float (if possible) """
+    if val == "":
+        return None
     try:
         return float(val)
     except ValueError:
