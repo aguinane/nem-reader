@@ -13,6 +13,7 @@ import pandas as pd
 from .nem_objects import Reading
 from .nem_reader import read_nem_file
 from .split_days import split_multiday_reads
+from .split_days import make_five_min_intervals
 
 log = logging.getLogger(__name__)
 
@@ -29,14 +30,19 @@ def get_data_frame(
     nmi_transactions: Dict[str, list],
     nmi_readings: Dict[str, List[Reading]],
     split_days: bool = False,
+    make_fivemins: bool = False,
 ) -> pd.DataFrame:
     """Get a Pandas DataFrame for Point(s)"""
 
     channels = list(nmi_transactions.keys())
-    if split_days:
+    if split_days or make_fivemins:
         # Split any readings that are >24 hours
         for ch in channels:
             nmi_readings[ch] = list(split_multiday_reads(nmi_readings[ch]))
+
+    if make_fivemins:
+        for ch in channels:
+            nmi_readings[ch] = list(make_five_min_intervals(nmi_readings[ch]))
 
     first_ch = channels[0]
     d = {
@@ -74,7 +80,7 @@ def output_as_data_frames(
     return data_frames
 
 
-def output_as_csv(file_name, output_dir="."):
+def output_as_csv(file_name, output_dir=".", make_fivemins: bool = False):
     """
     Transpose all channels and output a csv that is easier
     to read and do charting on
@@ -90,9 +96,12 @@ def output_as_csv(file_name, output_dir="."):
     m = read_nem_file(file_name)
     nmis = m.readings.keys()
     for nmi in nmis:
-        df = get_data_frame(m.transactions[nmi], m.readings[nmi])
+        df = get_data_frame(m.transactions[nmi], m.readings[nmi], make_fivemins=make_fivemins)
         last_date = df.iloc[-1][1]
-        output_file = "{}_{}_transposed.csv".format(nmi, last_date.strftime("%Y%m%d"))
+        if make_fivemins:
+            output_file = "{}_{}_5mintransposed.csv".format(nmi, last_date.strftime("%Y%m%d"))
+        else:
+            output_file = "{}_{}_transposed.csv".format(nmi, last_date.strftime("%Y%m%d"))
         output_path = output_dir / output_file
         df.to_csv(output_path, index=False)
         output_paths.append(output_path)

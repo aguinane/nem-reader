@@ -39,6 +39,7 @@ def list_nmis(nemfile, verbose):
 
 @cli.command("output")
 @click.argument("nemfile", type=click.Path(exists=True))
+@click.option("-5", "--five-min", is_flag=True, help="Convert to 5 min intervals.")
 @click.option("-v", "--verbose", is_flag=True, help="Will print verbose messages.")
 @click.option(
     "--outdir",
@@ -47,7 +48,7 @@ def list_nmis(nemfile, verbose):
     default=".",
     help="The output folder to save to",
 )
-def output(nemfile, verbose, outdir):
+def output(nemfile, five_min, verbose, outdir):
     """ Output NEM file to transposed CSV.
 
     NEMFILE is the name of the file to parse.
@@ -57,7 +58,7 @@ def output(nemfile, verbose, outdir):
     else:
         log_level = "WARNING"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
-    for fname in output_as_csv(nemfile, output_dir=outdir):
+    for fname in output_as_csv(nemfile, output_dir=outdir, make_fivemins=five_min):
         click.echo(f"Created {fname}")
 
 

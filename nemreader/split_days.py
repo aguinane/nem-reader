@@ -1,5 +1,6 @@
-from typing import Iterable, Generator
+from typing import Iterable, Generator, Tuple
 from datetime import timedelta
+from datetime import datetime
 from .nem_objects import Reading
 
 
@@ -53,3 +54,45 @@ def split_reading_into_days(start, end, val):
         yield period_start, period_end, period_val,
         period_start += timedelta(days=1)
         period_end += timedelta(days=1)
+
+
+def new_intervals(start_date: datetime, end_date: datetime,
+                         interval: float = 5
+                         ) -> Generator[Tuple[datetime, datetime], None, None]:
+    """ Generate equally spaced intervals between two dates """
+    delta = timedelta(seconds=interval * 60)
+    orig_delta = end_date - start_date
+    if (orig_delta / delta) % 1 != 0:
+        raise ValueError('Cannot split dates evenly')
+    num_intervals = int(orig_delta / delta)
+    for i in range(0,num_intervals):
+        start = start_date + i * delta
+        end = start + delta
+        yield start, end
+
+def make_five_min_intervals(readings: Iterable[Reading]) -> Iterable[Reading]:
+    """ Generate equally spaced values at 5-min intervals """
+    delta = timedelta(seconds=5 * 60)
+
+    for r in readings:
+        interval = r.t_end - r.t_start
+        if interval <= delta:
+            yield r
+            continue
+
+        intervals = list(new_intervals(r.t_start, r.t_end, interval=5))
+        split_val = r.read_value / len(intervals)
+        for start, end in intervals:
+                yield Reading(
+                    start,
+                    end,
+                    split_val,
+                    r.uom,
+                    r.meter_serial_number,
+                    r.quality_method,
+                    r.event_code,
+                    r.event_desc,
+                    None,
+                    None,
+                )
+    
