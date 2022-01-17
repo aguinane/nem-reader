@@ -10,6 +10,8 @@ import csv
 from typing import Generator, Tuple, List, Dict, Any
 from pathlib import Path
 import pandas as pd
+from sqlite_utils import Database
+
 from .nem_objects import Reading
 from .nem_reader import read_nem_file
 from .split_days import split_multiday_reads
@@ -96,12 +98,18 @@ def output_as_csv(file_name, output_dir=".", make_fivemins: bool = False):
     m = read_nem_file(file_name)
     nmis = m.readings.keys()
     for nmi in nmis:
-        df = get_data_frame(m.transactions[nmi], m.readings[nmi], make_fivemins=make_fivemins)
+        df = get_data_frame(
+            m.transactions[nmi], m.readings[nmi], make_fivemins=make_fivemins
+        )
         last_date = df.iloc[-1][1]
         if make_fivemins:
-            output_file = "{}_{}_5mintransposed.csv".format(nmi, last_date.strftime("%Y%m%d"))
+            output_file = "{}_{}_5mintransposed.csv".format(
+                nmi, last_date.strftime("%Y%m%d")
+            )
         else:
-            output_file = "{}_{}_transposed.csv".format(nmi, last_date.strftime("%Y%m%d"))
+            output_file = "{}_{}_transposed.csv".format(
+                nmi, last_date.strftime("%Y%m%d")
+            )
         output_path = output_dir / output_file
         df.to_csv(output_path, index=False)
         output_paths.append(output_path)
@@ -209,4 +217,49 @@ def output_as_daily_csv(file_name, output_dir="."):
 
     save_to_csv(headings, all_rows, output_path)
 
+    return output_path
+
+
+def output_as_sqlite(
+    file_name, output_dir=".", split_days: bool = False, make_fivemins: bool = False
+):
+    """Export all channels to sqlite file"""
+
+    output_dir = Path(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = output_dir / "nemdata.db"
+    db = Database(output_path)
+
+    m = read_nem_file(file_name)
+    nmis = m.readings.keys()
+    for nmi in nmis:
+        channels = list(m.transactions[nmi].keys())
+        nmi_readings = m.readings[nmi]
+
+        for ch in channels:
+            if split_days or make_fivemins:
+                nmi_readings[ch] = list(split_multiday_reads(nmi_readings[ch]))
+
+            if make_fivemins:
+                nmi_readings[ch] = list(make_five_min_intervals(nmi_readings[ch]))
+
+            for x in nmi_readings[ch]:
+                item = {
+                    "nmi": nmi,
+                    "channel": ch,
+                    "t_start": x.t_start,
+                    "t_end": x.t_end,
+                    'value': x.read_value,
+                    "quality_method": x.quality_method,
+                    "event_code": x.event_code,
+                    "event_desc": x.event_desc
+
+                }
+                db["readings"].upsert(item, pk=("nmi", "channel", "t_start"), column_order=("nmi", "channel", "t_start"))
+                
+    db.create_view("nmi_summary", """
+        SELECT nmi, channel, MIN(t_start) as first_interval, MAX(t_end) as last_interval
+        FROM readings
+        GROUP BY nmi, channel
+    """, replace=True)                
     return output_path

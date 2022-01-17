@@ -95,4 +95,5 @@ ENV/
 
 # Ignore CSVs unless in example folder
 *.csv
+*.db
 !examples/*.csv

@@ -8,7 +8,7 @@ You can quickly output the NEM file in a more human readable format:
 
 .. code-block:: bash
 
-    nemreader output "nem12#S01#INTEGM#NEMMCO.zip"
+    nemreader output-csv "nem12#S01#INTEGM#NEMMCO.zip"
 
 
 Which outputs transposed values to a csv file for all channels:

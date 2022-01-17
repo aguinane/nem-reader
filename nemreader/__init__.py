@@ -14,6 +14,7 @@ from .outputs import output_as_csv
 from .outputs import output_as_daily_csv
 from .outputs import nmis_in_file
 from .outputs import output_as_data_frames
+from .outputs import output_as_sqlite
 
 __all__ = [
     "__version__",
@@ -23,6 +24,7 @@ __all__ = [
     "output_as_csv",
     "output_as_daily_csv",
     "output_as_data_frames",
+    "output_as_sqlite"
 ]
 
 # Set default logging handler to avoid "No handler found" warnings.

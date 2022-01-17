@@ -3,6 +3,7 @@ import click
 from nemreader import nmis_in_file
 from nemreader import output_as_csv
 from nemreader import output_as_daily_csv
+from nemreader import output_as_sqlite
 from nemreader import __version__
 
 LOG_FORMAT = "%(asctime)s %(levelname)-8s %(message)s"
@@ -37,7 +38,7 @@ def list_nmis(nemfile, verbose):
         click.echo(f"{nmi}[{suffix_str}]")
 
 
-@cli.command("output")
+@cli.command("output-csv")
 @click.argument("nemfile", type=click.Path(exists=True))
 @click.option("-5", "--five-min", is_flag=True, help="Convert to 5 min intervals.")
 @click.option("-v", "--verbose", is_flag=True, help="Will print verbose messages.")
@@ -48,7 +49,7 @@ def list_nmis(nemfile, verbose):
     default=".",
     help="The output folder to save to",
 )
-def output(nemfile, five_min, verbose, outdir):
+def output_csv(nemfile, five_min, verbose, outdir):
     """ Output NEM file to transposed CSV.
 
     NEMFILE is the name of the file to parse.
@@ -62,7 +63,7 @@ def output(nemfile, five_min, verbose, outdir):
         click.echo(f"Created {fname}")
 
 
-@cli.command("output-daily")
+@cli.command("output-csv-daily")
 @click.argument("nemfile", type=click.Path(exists=True))
 @click.option("-v", "--verbose", is_flag=True, help="Will print verbose messages.")
 @click.option(
@@ -83,4 +84,30 @@ def output_daily(nemfile, verbose, outdir):
         log_level = "WARNING"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
     fname = output_as_daily_csv(nemfile, output_dir=outdir)
+    click.echo(f"Created {fname}")
+
+
+
+@cli.command("output-sqlite")
+@click.argument("nemfile", type=click.Path(exists=True))
+@click.option("-5", "--five-min", is_flag=True, help="Convert to 5 min intervals.")
+@click.option("-v", "--verbose", is_flag=True, help="Will print verbose messages.")
+@click.option(
+    "--outdir",
+    "-o",
+    type=click.Path(exists=True),
+    default=".",
+    help="The output folder to save to",
+)
+def output_sqlite(nemfile, five_min, verbose, outdir):
+    """ Output NEM file to transposed CSV.
+
+    NEMFILE is the name of the file to parse.
+    """
+    if verbose:
+        log_level = "DEBUG"
+    else:
+        log_level = "WARNING"
+    logging.basicConfig(level=log_level, format=LOG_FORMAT)
+    fname = output_as_sqlite(nemfile, output_dir=outdir, make_fivemins=five_min)
     click.echo(f"Created {fname}")
