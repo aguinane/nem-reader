@@ -24,7 +24,7 @@ __all__ = [
     "output_as_csv",
     "output_as_daily_csv",
     "output_as_data_frames",
-    "output_as_sqlite"
+    "output_as_sqlite",
 ]
 
 # Set default logging handler to avoid "No handler found" warnings.

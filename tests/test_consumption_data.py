@@ -6,7 +6,7 @@ import nemreader as nr
 
 
 def test_nem13_readings():
-    """ Test the NEM13 consumption data """
+    """Test the NEM13 consumption data"""
     meter_data = nr.read_nem_file(
         "examples/unzipped/Example_NEM13_consumption_data.csv"
     )

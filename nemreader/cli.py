@@ -1,5 +1,8 @@
+import os
 import logging
-import click
+import typer
+from typing import Optional
+from pathlib import Path
 from nemreader import nmis_in_file
 from nemreader import output_as_csv
 from nemreader import output_as_daily_csv
@@ -7,11 +10,22 @@ from nemreader import output_as_sqlite
 from nemreader import __version__
 
 LOG_FORMAT = "%(asctime)s %(levelname)-8s %(message)s"
+app = typer.Typer()
+DEFAULT_DIR = Path(".")
 
 
-@click.group()
-@click.version_option(version=__version__, prog_name="nemreader")
-def cli():
+def version_callback(value: bool):
+    if value:
+        typer.echo(f"nemreader version: {__version__}")
+        raise typer.Exit()
+
+
+@app.callback()
+def callback(
+    version: Optional[bool] = typer.Option(
+        None, "--version", callback=version_callback
+    ),
+):
     """nemreader
 
     Parse AEMO NEM12 and NEM13 meter data files
@@ -19,12 +33,8 @@ def cli():
     pass
 
 
-@cli.command("list-nmis")
-@click.argument("nemfile", type=click.Path(exists=True))
-@click.option("-v", "--verbose", is_flag=True, help="Will print verbose messages.")
-def list_nmis(nemfile, verbose):
-    """ Output list of NMIs in NEM file """
-
+@app.command()
+def list_nmis(nemfile: Path, verbose: bool = typer.Option(False, "--verbose", "-v")):
     if verbose:
         log_level = "DEBUG"
     else:
@@ -32,25 +42,26 @@ def list_nmis(nemfile, verbose):
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
 
     nmis = list(nmis_in_file(nemfile))
-    click.echo("The following NMI[suffix] exist in this file:")
+    typer.echo("The following NMI[suffix] exist in this file:")
     for nmi, suffixes in nmis:
         suffix_str = ",".join(suffixes)
-        click.echo(f"{nmi}[{suffix_str}]")
+        typer.echo(f"{nmi}[{suffix_str}]")
 
 
-@cli.command("output-csv")
-@click.argument("nemfile", type=click.Path(exists=True))
-@click.option("-5", "--five-min", is_flag=True, help="Convert to 5 min intervals.")
-@click.option("-v", "--verbose", is_flag=True, help="Will print verbose messages.")
-@click.option(
-    "--outdir",
-    "-o",
-    type=click.Path(exists=True),
-    default=".",
-    help="The output folder to save to",
-)
-def output_csv(nemfile, five_min, verbose, outdir):
-    """ Output NEM file to transposed CSV.
+@app.command()
+def output_csv(
+    nemfile: Path,
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+    five_min: bool = typer.Option(False, "--five-min", "-5"),
+    outdir: Path = typer.Option(
+        DEFAULT_DIR,
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+    ),
+):
+    """Output NEM file to transposed CSV.
 
     NEMFILE is the name of the file to parse.
     """
@@ -60,21 +71,22 @@ def output_csv(nemfile, five_min, verbose, outdir):
         log_level = "WARNING"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
     for fname in output_as_csv(nemfile, output_dir=outdir, make_fivemins=five_min):
-        click.echo(f"Created {fname}")
+        typer.echo(f"Created {fname}")
 
 
-@cli.command("output-csv-daily")
-@click.argument("nemfile", type=click.Path(exists=True))
-@click.option("-v", "--verbose", is_flag=True, help="Will print verbose messages.")
-@click.option(
-    "--outdir",
-    "-o",
-    type=click.Path(exists=True),
-    default=".",
-    help="The output folder to save to",
-)
-def output_daily(nemfile, verbose, outdir):
-    """ Output NEM file to transposed CSV.
+@app.command()
+def output_csv_daily(
+    nemfile: Path,
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+    outdir: Path = typer.Option(
+        DEFAULT_DIR,
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+    ),
+):
+    """Output NEM file to transposed CSV.
 
     NEMFILE is the name of the file to parse.
     """
@@ -84,23 +96,23 @@ def output_daily(nemfile, verbose, outdir):
         log_level = "WARNING"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
     fname = output_as_daily_csv(nemfile, output_dir=outdir)
-    click.echo(f"Created {fname}")
+    typer.echo(f"Created {fname}")
 
 
-
-@cli.command("output-sqlite")
-@click.argument("nemfile", type=click.Path(exists=True))
-@click.option("-5", "--five-min", is_flag=True, help="Convert to 5 min intervals.")
-@click.option("-v", "--verbose", is_flag=True, help="Will print verbose messages.")
-@click.option(
-    "--outdir",
-    "-o",
-    type=click.Path(exists=True),
-    default=".",
-    help="The output folder to save to",
-)
-def output_sqlite(nemfile, five_min, verbose, outdir):
-    """ Output NEM file to transposed CSV.
+@app.command()
+def output_sqlite(
+    nemfile: Path,
+    outdir: Path = typer.Option(
+        DEFAULT_DIR,
+        exists=True,
+        file_okay=True,
+        dir_okay=True,
+        writable=True,
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+    five_min: bool = typer.Option(False, "--five-min", "-5"),
+):
+    """Output NEM file to transposed CSV.
 
     NEMFILE is the name of the file to parse.
     """
@@ -109,5 +121,16 @@ def output_sqlite(nemfile, five_min, verbose, outdir):
     else:
         log_level = "WARNING"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
-    fname = output_as_sqlite(nemfile, output_dir=outdir, make_fivemins=five_min)
-    click.echo(f"Created {fname}")
+    if os.path.isdir(nemfile):
+        typer.echo(f"Getting files in directory {nemfile}")
+        files = list(nemfile.glob("*.csv"))
+        files += list(nemfile.glob("*.zip"))
+    else:
+        files = [nemfile]
+    for fp in files:
+        typer.echo(f"Processing {fp}")
+        try:
+            fname = output_as_sqlite(fp, output_dir=outdir, make_fivemins=five_min)
+        except Exception:
+            typer.echo(f"Not a valid nem file: {fp}")
+    typer.echo(f"Finished exporting to DB.")

@@ -3,7 +3,6 @@
     ~~~~~
 """
 
-if __name__ == "__main__":
-    from nemreader.cli import cli
+from nemreader.cli import app
 
-    cli()
+app()

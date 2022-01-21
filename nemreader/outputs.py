@@ -221,7 +221,10 @@ def output_as_daily_csv(file_name, output_dir="."):
 
 
 def output_as_sqlite(
-    file_name, output_dir=".", split_days: bool = False, make_fivemins: bool = False
+    file_name: Path,
+    output_dir=".",
+    split_days: bool = False,
+    make_fivemins: bool = False,
 ):
     """Export all channels to sqlite file"""
 
@@ -243,23 +246,32 @@ def output_as_sqlite(
             if make_fivemins:
                 nmi_readings[ch] = list(make_five_min_intervals(nmi_readings[ch]))
 
+            items = []
             for x in nmi_readings[ch]:
                 item = {
                     "nmi": nmi,
                     "channel": ch,
                     "t_start": x.t_start,
                     "t_end": x.t_end,
-                    'value': x.read_value,
+                    "value": x.read_value,
                     "quality_method": x.quality_method,
                     "event_code": x.event_code,
-                    "event_desc": x.event_desc
-
+                    "event_desc": x.event_desc,
                 }
-                db["readings"].upsert(item, pk=("nmi", "channel", "t_start"), column_order=("nmi", "channel", "t_start"))
-                
-    db.create_view("nmi_summary", """
+                items.append(item)
+            db["readings"].upsert_all(
+                items,
+                pk=("nmi", "channel", "t_start"),
+                column_order=("nmi", "channel", "t_start"),
+            )
+
+    db.create_view(
+        "nmi_summary",
+        """
         SELECT nmi, channel, MIN(t_start) as first_interval, MAX(t_end) as last_interval
         FROM readings
         GROUP BY nmi, channel
-    """, replace=True)                
+    """,
+        replace=True,
+    )
     return output_path

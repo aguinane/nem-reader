@@ -20,13 +20,12 @@ log = logging.getLogger(__name__)
 
 
 def flatten_list(l: List[list]) -> list:
-    """ takes a list of lists, l and returns a flat list
-    """
+    """takes a list of lists, l and returns a flat list"""
     return [v for inner_l in l for v in inner_l]
 
 
 def read_nem_file(file_path: str, ignore_missing_header=False) -> NEMFile:
-    """ Read in NEM file and return meter readings named tuple
+    """Read in NEM file and return meter readings named tuple
 
     :param file_path: The NEM file to process
     :param ignore_missing_header: Whether to continue parsing if missing header.
@@ -55,7 +54,7 @@ def read_nem_file(file_path: str, ignore_missing_header=False) -> NEMFile:
 
 
 def parse_nem_file(nem_file, file_name="", ignore_missing_header=False) -> NEMFile:
-    """ Parse NEM file and return meter readings named tuple """
+    """Parse NEM file and return meter readings named tuple"""
     reader = csv.reader(nem_file, delimiter=",")
     first_row = next(reader, None)
 
@@ -82,7 +81,7 @@ def parse_nem_file(nem_file, file_name="", ignore_missing_header=False) -> NEMFi
 def parse_header_row(
     row: List[Any], ignore_missing_header=False, file_name=None
 ) -> HeaderRecord:
-    """ Parse first row of NEM file """
+    """Parse first row of NEM file"""
 
     record_indicator = int(row[0])
     if record_indicator != 100:
@@ -101,7 +100,7 @@ def parse_header_row(
 
 
 def parse_100_row(row: List[Any], file_name: str) -> HeaderRecord:
-    """ Parse header record (100) """
+    """Parse header record (100)"""
     return HeaderRecord(
         row[1], parse_datetime(row[2]), row[3], row[4], file_name, False
     )
@@ -110,7 +109,7 @@ def parse_100_row(row: List[Any], file_name: str) -> HeaderRecord:
 def parse_nem12_rows(
     nem_list: Iterable, header: HeaderRecord, file_name=None
 ) -> NEMFile:
-    """ Parse NEM row iterator and return meter readings named tuple """
+    """Parse NEM row iterator and return meter readings named tuple"""
     # readings nested by NMI then channel
     readings: Dict[str, Dict[str, List[Reading]]] = {}
     # transactions nested by NMI then channel
@@ -200,7 +199,7 @@ def parse_nem12_rows(
 def parse_nem13_rows(
     nem_list: Iterable, header: HeaderRecord, file_name=None
 ) -> NEMFile:
-    """ Parse NEM row iterator and return meter readings named tuple """
+    """Parse NEM row iterator and return meter readings named tuple"""
     # readings nested by NMI then channel
     readings: Dict[str, Dict[str, List[Reading]]] = {}
     # transactions nested by NMI then channel
@@ -245,7 +244,7 @@ def parse_nem13_rows(
 
 
 def calculate_manual_reading(basic_data: BasicMeterData) -> Reading:
-    """ Calculate the interval between two manual readings """
+    """Calculate the interval between two manual readings"""
     t_start = basic_data.previous_register_read_datetime
     t_end = basic_data.current_register_read_datetime
     val_start = basic_data.previous_register_read
@@ -271,7 +270,7 @@ def calculate_manual_reading(basic_data: BasicMeterData) -> Reading:
 
 
 def parse_200_row(row: list) -> NmiDetails:
-    """ Parse NMI data details record (200) """
+    """Parse NMI data details record (200)"""
 
     next_read = None  # Next scheduled read is an optional field
     if len(row) > 9:
@@ -283,7 +282,7 @@ def parse_200_row(row: list) -> NmiDetails:
 
 
 def parse_250_row(row: list) -> BasicMeterData:
-    """ Parse basic meter data record (250) """
+    """Parse basic meter data record (250)"""
     return BasicMeterData(
         row[1],
         row[2],
@@ -318,7 +317,7 @@ def nth(iterable, n, default=None):
 def parse_300_row(
     row: list, interval: int, uom: str, meter_serial_number: str
 ) -> IntervalRecord:
-    """ Interval data record (300) """
+    """Interval data record (300)"""
 
     num_intervals = int(24 * 60 / interval)
     interval_date = parse_datetime(row[1])
@@ -363,8 +362,7 @@ def parse_interval_records(
     event_code: str = "",
     event_desc: str = "",
 ) -> List[Reading]:
-    """ Convert interval values into tuples with datetime
-    """
+    """Convert interval values into tuples with datetime"""
     interval_delta = timedelta(minutes=interval)
     return [
         Reading(
@@ -384,7 +382,7 @@ def parse_interval_records(
 
 
 def parse_reading(val: str) -> Optional[float]:
-    """ Convert reading value to float (if possible) """
+    """Convert reading value to float (if possible)"""
     if val == "":
         return None
     try:
@@ -395,14 +393,14 @@ def parse_reading(val: str) -> Optional[float]:
 
 
 def parse_400_row(row: list) -> tuple:
-    """ Interval event record (400) """
+    """Interval event record (400)"""
 
     return EventRecord(int(row[1]), int(row[2]), row[3], row[4], row[5])
 
 
 def update_reading_events(readings, event_record):
-    """ Updates readings from a 300 row to reflect any events found in a
-        subsequent 400 row
+    """Updates readings from a 300 row to reflect any events found in a
+    subsequent 400 row
     """
     # event intervals are 1-indexed
     for i in range(event_record.start_interval - 1, event_record.end_interval):
@@ -422,17 +420,17 @@ def update_reading_events(readings, event_record):
 
 
 def parse_500_row(row: list) -> tuple:
-    """ Parse B2B details record """
+    """Parse B2B details record"""
     return B2BDetails12(row[1], row[2], row[3], row[4])
 
 
 def parse_550_row(row: list) -> tuple:
-    """ Parse B2B details record """
+    """Parse B2B details record"""
     return B2BDetails13(row[1], row[2], row[3], row[4])
 
 
 def parse_datetime(record: str) -> Optional[datetime]:
-    """ Parse a datetime string into a python datetime object """
+    """Parse a datetime string into a python datetime object"""
     # NEM defines Date8, DateTime12 and DateTime14
     format_strings = {8: "%Y%m%d", 12: "%Y%m%d%H%M", 14: "%Y%m%d%H%M%S"}
 

@@ -11,7 +11,7 @@ from typing import Optional, List, Dict
 
 
 class HeaderRecord(NamedTuple):
-    """ Header record (100) """
+    """Header record (100)"""
 
     version_header: str
     creation_date: Optional[datetime]
@@ -22,7 +22,7 @@ class HeaderRecord(NamedTuple):
 
 
 class NmiDetails(NamedTuple):
-    """ NMI data details record (200)"""
+    """NMI data details record (200)"""
 
     nmi: str
     nmi_configuration: str
@@ -36,7 +36,7 @@ class NmiDetails(NamedTuple):
 
 
 class Reading(NamedTuple):
-    """ Represents a meter reading """
+    """Represents a meter reading"""
 
     t_start: datetime
     t_end: datetime
@@ -52,7 +52,7 @@ class Reading(NamedTuple):
 
 
 class BasicMeterData(NamedTuple):
-    """ Basic meter data record (250) """
+    """Basic meter data record (250)"""
 
     nmi: str
     nmi_configuration: str
@@ -79,7 +79,7 @@ class BasicMeterData(NamedTuple):
 
 
 class IntervalRecord(NamedTuple):
-    """ Interval data record (300) """
+    """Interval data record (300)"""
 
     interval_date: Optional[datetime]
     interval_values: List[Reading]
@@ -92,7 +92,7 @@ class IntervalRecord(NamedTuple):
 
 
 class EventRecord(NamedTuple):
-    """ Interval event record (400) """
+    """Interval event record (400)"""
 
     start_interval: int
     end_interval: int
@@ -102,7 +102,7 @@ class EventRecord(NamedTuple):
 
 
 class B2BDetails12(NamedTuple):
-    """ B2B details record (500) """
+    """B2B details record (500)"""
 
     trans_code: str
     ret_service_order: str
@@ -111,7 +111,7 @@ class B2BDetails12(NamedTuple):
 
 
 class B2BDetails13(NamedTuple):
-    """ B2B details record (550) """
+    """B2B details record (550)"""
 
     previous_trans_code: str
     previous_ret_service_order: str
@@ -120,7 +120,7 @@ class B2BDetails13(NamedTuple):
 
 
 class NEMFile(NamedTuple):
-    """ Represents a meter reading """
+    """Represents a meter reading"""
 
     header: HeaderRecord
     readings: Dict[str, Dict[str, List[Reading]]]
