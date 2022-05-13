@@ -52,7 +52,7 @@ def list_nmis(nemfile: Path, verbose: bool = typer.Option(False, "--verbose", "-
 def output_csv(
     nemfile: Path,
     verbose: bool = typer.Option(False, "--verbose", "-v"),
-    five_min: bool = typer.Option(False, "--five-min", "-5"),
+    set_interval: Optional[int] = None,
     outdir: Path = typer.Option(
         DEFAULT_DIR,
         exists=True,
@@ -70,7 +70,7 @@ def output_csv(
     else:
         log_level = "WARNING"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
-    for fname in output_as_csv(nemfile, output_dir=outdir, make_fivemins=five_min):
+    for fname in output_as_csv(nemfile, output_dir=outdir, set_interval=set_interval):
         typer.echo(f"Created {fname}")
 
 

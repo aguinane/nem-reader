@@ -7,7 +7,7 @@
 import os
 import logging
 import csv
-from typing import Generator, Tuple, List, Dict, Any
+from typing import Generator, Tuple, List, Dict, Any, Optional
 from pathlib import Path
 import pandas as pd
 from sqlite_utils import Database
@@ -15,7 +15,7 @@ from sqlite_utils import Database
 from .nem_objects import Reading
 from .nem_reader import read_nem_file
 from .split_days import split_multiday_reads
-from .split_days import make_five_min_intervals
+from .split_days import make_set_interval
 
 log = logging.getLogger(__name__)
 
@@ -29,22 +29,20 @@ def nmis_in_file(file_name) -> Generator[Tuple[str, List[str]], None, None]:
 
 
 def get_data_frame(
-    nmi_transactions: Dict[str, list],
+    channels: List[str],
     nmi_readings: Dict[str, List[Reading]],
     split_days: bool = False,
-    make_fivemins: bool = False,
+    set_interval: Optional[int] = None,
 ) -> pd.DataFrame:
     """Get a Pandas DataFrame for Point(s)"""
-
-    channels = list(nmi_transactions.keys())
-    if split_days or make_fivemins:
+    if split_days or set_interval:
         # Split any readings that are >24 hours
         for ch in channels:
             nmi_readings[ch] = list(split_multiday_reads(nmi_readings[ch]))
 
-    if make_fivemins:
+    if set_interval:
         for ch in channels:
-            nmi_readings[ch] = list(make_five_min_intervals(nmi_readings[ch]))
+            nmi_readings[ch] = list(make_set_interval(nmi_readings[ch], set_interval))
 
     first_ch = channels[0]
     d = {
@@ -62,13 +60,15 @@ def get_data_frame(
         index = [x.t_start for x in nmi_readings[ch]]
         values = [x.read_value for x in nmi_readings[ch]]
         ser = pd.Series(data=values, index=index, name=ch)
-
         df.loc[:, ch] = ser
     return df
 
 
 def output_as_data_frames(
-    file_name, split_days: bool = True, ignore_missing_header: bool = False
+    file_name,
+    split_days: bool = True,
+    set_interval: Optional[int] = None,
+    ignore_missing_header: bool = False,
 ) -> List[pd.DataFrame]:
     """Return list of data frames for each NMI"""
 
@@ -77,12 +77,18 @@ def output_as_data_frames(
     data_frames = []
     for nmi in nmis:
         nmi_readings = m.readings[nmi]
-        nmi_df = get_data_frame(m.transactions[nmi], nmi_readings, split_days)
+        channels = list(m.transactions[nmi])
+        nmi_df = get_data_frame(
+            channels,
+            nmi_readings,
+            split_days=split_days,
+            set_interval=set_interval,
+        )
         data_frames.append((nmi, nmi_df))
     return data_frames
 
 
-def output_as_csv(file_name, output_dir=".", make_fivemins: bool = False):
+def output_as_csv(file_name, output_dir=".", set_interval: Optional[int] = None):
     """
     Transpose all channels and output a csv that is easier
     to read and do charting on
@@ -98,18 +104,10 @@ def output_as_csv(file_name, output_dir=".", make_fivemins: bool = False):
     m = read_nem_file(file_name)
     nmis = m.readings.keys()
     for nmi in nmis:
-        df = get_data_frame(
-            m.transactions[nmi], m.readings[nmi], make_fivemins=make_fivemins
-        )
-        last_date = df.iloc[-1][1]
-        if make_fivemins:
-            output_file = "{}_{}_5mintransposed.csv".format(
-                nmi, last_date.strftime("%Y%m%d")
-            )
-        else:
-            output_file = "{}_{}_transposed.csv".format(
-                nmi, last_date.strftime("%Y%m%d")
-            )
+        channels = list(m.transactions[nmi])
+        df = get_data_frame(channels, m.readings[nmi], set_interval=set_interval)
+        last_date = df.iloc[-1][1].strftime("%Y%m%d")
+        output_file = f"{nmi}_{last_date}_transposed.csv"
         output_path = output_dir / output_file
         df.to_csv(output_path, index=False)
         output_paths.append(output_path)
@@ -195,7 +193,7 @@ def output_as_daily_csv(file_name, output_dir="."):
     os.makedirs(output_dir, exist_ok=True)
 
     file_stem = Path(file_name).stem
-    output_file = "{}_daily_totals.csv".format(file_stem)
+    output_file = f"{file_stem}_daily_totals.csv"
     output_path = output_dir / output_file
 
     m = read_nem_file(file_name)
@@ -224,7 +222,7 @@ def output_as_sqlite(
     file_name: Path,
     output_dir=".",
     split_days: bool = False,
-    make_fivemins: bool = False,
+    set_interval: Optional[int] = None
 ):
     """Export all channels to sqlite file"""
 
@@ -240,11 +238,11 @@ def output_as_sqlite(
         nmi_readings = m.readings[nmi]
 
         for ch in channels:
-            if split_days or make_fivemins:
+            if split_days or set_interval:
                 nmi_readings[ch] = list(split_multiday_reads(nmi_readings[ch]))
 
-            if make_fivemins:
-                nmi_readings[ch] = list(make_five_min_intervals(nmi_readings[ch]))
+            if set_interval:
+                nmi_readings[ch] = list(make_set_interval(nmi_readings[ch], set_interval))
 
             items = []
             for x in nmi_readings[ch]:

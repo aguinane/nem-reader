@@ -71,9 +71,11 @@ def new_intervals(
         yield start, end
 
 
-def make_five_min_intervals(readings: Iterable[Reading]) -> Iterable[Reading]:
+def make_set_interval(
+    readings: Iterable[Reading], new_interval: int = 5
+) -> Iterable[Reading]:
     """Generate equally spaced values at 5-min intervals"""
-    delta = timedelta(seconds=5 * 60)
+    delta = timedelta(seconds=new_interval * 60)
 
     for r in readings:
         interval = r.t_end - r.t_start
@@ -81,7 +83,7 @@ def make_five_min_intervals(readings: Iterable[Reading]) -> Iterable[Reading]:
             yield r
             continue
 
-        intervals = list(new_intervals(r.t_start, r.t_end, interval=5))
+        intervals = list(new_intervals(r.t_start, r.t_end, interval=new_interval))
         split_val = r.read_value / len(intervals)
         for start, end in intervals:
             yield Reading(
