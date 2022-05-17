@@ -69,13 +69,12 @@ def output_as_data_frames(
     split_days: bool = True,
     set_interval: Optional[int] = None,
     ignore_missing_header: bool = False,
-) -> List[pd.DataFrame]:
+) -> List[Tuple[str, pd.DataFrame]]:
     """Return list of data frames for each NMI"""
 
     m = read_nem_file(file_name, ignore_missing_header=ignore_missing_header)
-    nmis = list(m.readings.keys())
     data_frames = []
-    for nmi in nmis:
+    for (nmi, nmi_readings) in m.readings.items():
         nmi_readings = m.readings[nmi]
         channels = list(m.transactions[nmi])
         nmi_df = get_data_frame(
