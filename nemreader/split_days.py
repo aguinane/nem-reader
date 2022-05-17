@@ -1,6 +1,7 @@
-from typing import Iterable, Generator, Tuple
-from datetime import timedelta
-from datetime import datetime
+from datetime import datetime, timedelta
+from statistics import mean
+from typing import Generator, Iterable, Tuple
+
 from .nem_objects import Reading
 
 
@@ -63,7 +64,7 @@ def new_intervals(
     delta = timedelta(seconds=interval * 60)
     orig_delta = end_date - start_date
     if (orig_delta / delta) % 1 != 0:
-        raise ValueError("Cannot split dates evenly")
+        raise ValueError(f"New interval of {delta} not an increment of {orig_delta}")
     num_intervals = int(orig_delta / delta)
     for i in range(0, num_intervals):
         start = start_date + i * delta
@@ -71,30 +72,88 @@ def new_intervals(
         yield start, end
 
 
+def get_group_end(end_date: datetime, interval: int = 30) -> datetime:
+    """Get interval group end time"""
+    group_end = end_date
+    while group_end.minute % interval != 0:
+        group_end += timedelta(minutes=1)
+    return group_end
+
+
 def make_set_interval(
     readings: Iterable[Reading], new_interval: int = 5
 ) -> Iterable[Reading]:
     """Generate equally spaced values at 5-min intervals"""
     delta = timedelta(seconds=new_interval * 60)
-
+    group_records = {}
     for r in readings:
         interval = r.t_end - r.t_start
-        if interval <= delta:
+        if interval == delta:  # No change required
             yield r
             continue
 
-        intervals = list(new_intervals(r.t_start, r.t_end, interval=new_interval))
-        split_val = r.read_value / len(intervals)
-        for start, end in intervals:
-            yield Reading(
-                start,
-                end,
-                split_val,
-                r.uom,
-                r.meter_serial_number,
-                r.quality_method,
-                r.event_code,
-                r.event_desc,
-                None,
-                None,
-            )
+        if interval > delta:  # Need to split up smaller
+            intervals = list(new_intervals(r.t_start, r.t_end, interval=new_interval))
+            if r.uom[-1] == "h":
+                split_val = r.read_value / len(intervals)
+            else:
+                split_val = r.read_value  # Average so assume flat
+
+            for start, end in intervals:
+                yield Reading(
+                    start,
+                    end,
+                    split_val,
+                    r.uom,
+                    r.meter_serial_number,
+                    r.quality_method,
+                    r.event_code,
+                    r.event_desc,
+                    None,
+                    None,
+                )
+
+        if interval < delta:  # Need to aggregate to bigger intervals
+            # Increment dictionary value
+            group_end = get_group_end(r.t_end, new_interval)
+            if group_end not in group_records:
+                group_records[group_end] = [r]
+            else:
+                group_records[group_end].append(r)
+
+    # Output any aggregated grouped values
+    for group_end in sorted(group_records.keys()):
+
+        start = group_end - delta
+        grp_readings = group_records[group_end]
+        uom = grp_readings[0].uom
+        meter_serial_number = grp_readings[0].meter_serial_number
+        quality_methods = list(set([x.quality_method for x in grp_readings]))
+        event_codes = list(set([x.event_code for x in grp_readings if x.event_code]))
+        event_descs = list(set([x.event_desc for x in grp_readings if x.event_desc]))
+        if len(quality_methods) == 1:
+            quality_method = grp_readings[0].quality_method
+            event_code = event_codes[0] if event_codes else ""
+            event_desc = event_descs[0] if event_descs else ""
+        else:
+            quality_method = "V"
+            event_code = grp_readings[0].event_code
+            event_desc = grp_readings[0].event_desc
+
+        if r.uom[-1] == "h":
+            grp_value = sum([x.read_value for x in grp_readings])
+        else:
+            grp_value = mean([x.read_value for x in grp_readings])
+
+        yield Reading(
+            start,
+            group_end,
+            grp_value,
+            uom,
+            meter_serial_number,
+            quality_method,
+            event_code,
+            event_desc,
+            None,
+            None,
+        )

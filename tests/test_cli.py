@@ -1,6 +1,6 @@
 import pytest
-from typer.testing import CliRunner
 from nemreader.cli import app
+from typer.testing import CliRunner
 
 
 @pytest.fixture

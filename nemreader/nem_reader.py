@@ -4,17 +4,17 @@
     Read MDFF format
 """
 
-import os
 import csv
 import logging
-from datetime import datetime, timedelta
+import os
 import zipfile
+from datetime import datetime, timedelta
 from itertools import chain, islice
-from typing import Iterable, Any
-from typing import Optional, List, Dict
-from .nem_objects import NEMFile, HeaderRecord, NmiDetails
-from .nem_objects import Reading, BasicMeterData, IntervalRecord, EventRecord
-from .nem_objects import B2BDetails12, B2BDetails13
+from typing import Any, Dict, Iterable, List, Optional
+
+from .nem_objects import (B2BDetails12, B2BDetails13, BasicMeterData,
+                          EventRecord, HeaderRecord, IntervalRecord, NEMFile,
+                          NmiDetails, Reading)
 
 log = logging.getLogger(__name__)
 
@@ -193,7 +193,7 @@ def parse_nem12_rows(
     if not observed_900_record:
         log.warning("Missing end of data (900) row.")
 
-    return NEMFile(header, readings, trans)
+    return NEMFile(header=header, readings=readings, transactions=trans)
 
 
 def parse_nem13_rows(
@@ -240,7 +240,7 @@ def parse_nem13_rows(
             log.warning(
                 "Record indicator %s not supported and was skipped", record_indicator
             )
-    return NEMFile(header, readings, trans)
+    return NEMFile(header=header, readings=readings, transactions=trans)
 
 
 def calculate_manual_reading(basic_data: BasicMeterData) -> Reading:

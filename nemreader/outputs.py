@@ -4,18 +4,18 @@
     Output results in different formats
 """
 
-import os
-import logging
 import csv
-from typing import Generator, Tuple, List, Dict, Any, Optional
+import logging
+import os
 from pathlib import Path
+from typing import Any, Dict, Generator, List, Optional, Tuple
+
 import pandas as pd
 from sqlite_utils import Database
 
 from .nem_objects import Reading
 from .nem_reader import read_nem_file
-from .split_days import split_multiday_reads
-from .split_days import make_set_interval
+from .split_days import make_set_interval, split_multiday_reads
 
 log = logging.getLogger(__name__)
 
@@ -222,7 +222,7 @@ def output_as_sqlite(
     file_name: Path,
     output_dir=".",
     split_days: bool = False,
-    set_interval: Optional[int] = None
+    set_interval: Optional[int] = None,
 ):
     """Export all channels to sqlite file"""
 
@@ -242,7 +242,9 @@ def output_as_sqlite(
                 nmi_readings[ch] = list(split_multiday_reads(nmi_readings[ch]))
 
             if set_interval:
-                nmi_readings[ch] = list(make_set_interval(nmi_readings[ch], set_interval))
+                nmi_readings[ch] = list(
+                    make_set_interval(nmi_readings[ch], set_interval)
+                )
 
             items = []
             for x in nmi_readings[ch]:

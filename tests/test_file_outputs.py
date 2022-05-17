@@ -1,6 +1,4 @@
-from nemreader import output_as_csv
-from nemreader import output_as_daily_csv
-from nemreader import output_as_data_frames
+from nemreader import output_as_csv, output_as_daily_csv, output_as_data_frames
 
 
 def test_csv_output(tmpdir):

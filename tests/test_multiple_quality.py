@@ -1,5 +1,5 @@
-import pytest
 import nemreader as nr
+import pytest
 
 
 def test_correct_records():

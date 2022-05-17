@@ -1,5 +1,6 @@
-import os
 import datetime
+import os
+
 import nemreader as nr
 
 

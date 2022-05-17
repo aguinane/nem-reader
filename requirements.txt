@@ -1,3 +1,4 @@
 typer
 pandas
 sqlite_utils
+pydantic

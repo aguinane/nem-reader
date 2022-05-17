@@ -6,8 +6,9 @@
 
 
 from datetime import datetime
-from typing import NamedTuple
-from typing import Optional, List, Dict
+from typing import Dict, List, NamedTuple, Optional
+
+from pydantic import BaseModel
 
 
 class HeaderRecord(NamedTuple):
@@ -119,9 +120,13 @@ class B2BDetails13(NamedTuple):
     current_ret_service_order: str
 
 
-class NEMFile(NamedTuple):
+class NEMFile(BaseModel):
     """Represents a meter reading"""
 
     header: HeaderRecord
     readings: Dict[str, Dict[str, List[Reading]]]
     transactions: Dict[str, Dict[str, list]]
+
+    @property
+    def nmis(self) -> List[str]:
+        return list(self.transactions.keys())

@@ -1,13 +1,11 @@
-import os
 import logging
-import typer
-from typing import Optional
+import os
 from pathlib import Path
-from nemreader import nmis_in_file
-from nemreader import output_as_csv
-from nemreader import output_as_daily_csv
-from nemreader import output_as_sqlite
-from nemreader import __version__
+from typing import Optional
+
+import typer
+from nemreader import (__version__, nmis_in_file, output_as_csv,
+                       output_as_daily_csv, output_as_sqlite)
 
 LOG_FORMAT = "%(asctime)s %(levelname)-8s %(message)s"
 app = typer.Typer()
@@ -130,7 +128,7 @@ def output_sqlite(
     for fp in files:
         typer.echo(f"Processing {fp}")
         try:
-            fname = output_as_sqlite(fp, output_dir=outdir, make_fivemins=five_min)
+            output_as_sqlite(fp, output_dir=outdir, make_fivemins=five_min)
         except Exception:
             typer.echo(f"Not a valid nem file: {fp}")
     typer.echo(f"Finished exporting to DB.")

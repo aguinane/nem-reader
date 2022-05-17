@@ -1,8 +1,8 @@
 """ Test Suite
 """
 
-import pytest
 import nemreader as nr
+import pytest
 
 
 def test_nem13_readings():
