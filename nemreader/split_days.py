@@ -94,7 +94,7 @@ def make_set_interval(
 
         if interval > delta:  # Need to split up smaller
             intervals = list(new_intervals(r.t_start, r.t_end, interval=new_interval))
-            if r.uom[-1] == "h":
+            if r.uom and r.uom[-1] == "h":
                 split_val = r.read_value / len(intervals)
             else:
                 split_val = r.read_value  # Average so assume flat
@@ -140,7 +140,7 @@ def make_set_interval(
             event_code = grp_readings[0].event_code
             event_desc = grp_readings[0].event_desc
 
-        if r.uom[-1] == "h":
+        if r.uom and r.uom[-1] == "h":
             grp_value = sum([x.read_value for x in grp_readings])
         else:
             grp_value = mean([x.read_value for x in grp_readings])
