@@ -4,8 +4,9 @@ from pathlib import Path
 from typing import Optional
 
 import typer
-from nemreader import (__version__, nmis_in_file, output_as_csv,
-                       output_as_daily_csv, output_as_sqlite)
+
+from .outputs import nmis_in_file, output_as_csv, output_as_daily_csv, output_as_sqlite
+from .version import __version__
 
 LOG_FORMAT = "%(asctime)s %(levelname)-8s %(message)s"
 app = typer.Typer()

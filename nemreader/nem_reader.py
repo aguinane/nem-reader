@@ -12,9 +12,17 @@ from datetime import datetime, timedelta
 from itertools import chain, islice
 from typing import Any, Dict, Iterable, List, Optional
 
-from .nem_objects import (B2BDetails12, B2BDetails13, BasicMeterData,
-                          EventRecord, HeaderRecord, IntervalRecord, NEMFile,
-                          NmiDetails, Reading)
+from .nem_objects import (
+    B2BDetails12,
+    B2BDetails13,
+    BasicMeterData,
+    EventRecord,
+    HeaderRecord,
+    IntervalRecord,
+    NEMFile,
+    NmiDetails,
+    Reading,
+)
 
 log = logging.getLogger(__name__)
 
