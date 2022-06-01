@@ -5,7 +5,7 @@ Install and update using `pip`_:
 
 .. code-block:: bash
 
-    pip install nemreader[cli]
+    pip install nemreader
 
 If you want to run as a command line tool, install with extra dependancies.
 
