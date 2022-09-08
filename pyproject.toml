@@ -1,6 +1,14 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
-]
+requires = ["setuptools>=50", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest]
+addopts = "-ra --failed-first --showlocals --durations=3 --cov=nemreader"
+
+[tool.coverage.run]
+omit = ["*/version.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+fail_under = 85

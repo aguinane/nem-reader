@@ -44,7 +44,14 @@ def get_data_frame(
         for ch in channels:
             nmi_readings[ch] = list(make_set_interval(nmi_readings[ch], set_interval))
 
-    first_ch = channels[0]
+    # Work out which channel has smallest intervals and use that as first index
+    ch_rows = []
+    for i, ch in enumerate(channels):
+        num_rows = len(nmi_readings[ch])
+        ch_rows.append((num_rows, ch))
+    ch_rows.sort()
+    first_ch = ch_rows[-1][1]
+
     d = {
         "t_start": [x.t_start for x in nmi_readings[first_ch]],
         "t_end": [x.t_end for x in nmi_readings[first_ch]],
@@ -56,7 +63,9 @@ def get_data_frame(
 
     df = pd.DataFrame(data=d, index=d["t_start"])
 
-    for ch in channels[1:]:
+    for ch in channels:
+        if ch == first_ch:
+            continue  # This channel already added
         index = [x.t_start for x in nmi_readings[ch]]
         values = [x.read_value for x in nmi_readings[ch]]
         ser = pd.Series(data=values, index=index, name=ch)
