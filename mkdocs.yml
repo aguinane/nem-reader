@@ -1,0 +1,22 @@
+site_name: nemreader Documentation
+site_author: Alex Guinman
+copyright: Copyright &copy; Alex Guinman
+repo_url: https://github.com/aguinane/nem-reader
+edit_uri: https://github.com/aguinane/nem-reader/edit/master/docs
+theme: readthedocs
+use_directory_urls: false
+plugins:
+  - search
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: false
+            merge_init_into_class: yes
+markdown_extensions:
+  - admonition
