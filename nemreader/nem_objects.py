@@ -1,10 +1,3 @@
-"""
-    nemreader.nem_objects
-    ~~~~~
-    Define named tuple data classes
-"""
-
-
 from datetime import datetime
 from typing import Dict, List, NamedTuple, Optional
 

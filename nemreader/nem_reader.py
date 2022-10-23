@@ -1,9 +1,3 @@
-"""
-    nemreader.nem_reader
-    ~~~~~
-    Read MDFF format
-"""
-
 import csv
 import logging
 import os

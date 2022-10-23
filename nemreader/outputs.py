@@ -1,9 +1,3 @@
-"""
-    nemreader.outputs
-    ~~~~~
-    Output results in different formats
-"""
-
 import csv
 import logging
 import os
