@@ -13,7 +13,7 @@ from .nem_objects import (
     EventRecord,
     HeaderRecord,
     IntervalRecord,
-    NEMFile,
+    NEMData,
     NmiDetails,
     Reading,
 )
@@ -26,7 +26,7 @@ def flatten_list(l: List[list]) -> list:
     return [v for inner_l in l for v in inner_l]
 
 
-def read_nem_file(file_path: str, ignore_missing_header=False) -> NEMFile:
+def read_nem_file(file_path: str, ignore_missing_header=False) -> NEMData:
     """Read in NEM file and return meter readings named tuple
 
     :param file_path: The NEM file to process
@@ -55,7 +55,7 @@ def read_nem_file(file_path: str, ignore_missing_header=False) -> NEMFile:
         return parse_nem_file(nmi_file, ignore_missing_header=ignore_missing_header)
 
 
-def parse_nem_file(nem_file, file_name="", ignore_missing_header=False) -> NEMFile:
+def parse_nem_file(nem_file, file_name="", ignore_missing_header=False) -> NEMData:
     """Parse NEM file and return meter readings named tuple"""
     reader = csv.reader(nem_file, delimiter=",")
     first_row = next(reader, None)
@@ -110,7 +110,7 @@ def parse_100_row(row: List[Any], file_name: str) -> HeaderRecord:
 
 def parse_nem12_rows(
     nem_list: Iterable, header: HeaderRecord, file_name=None
-) -> NEMFile:
+) -> NEMData:
     """Parse NEM row iterator and return meter readings named tuple"""
     # readings nested by NMI then channel
     readings: Dict[str, Dict[str, List[Reading]]] = {}
@@ -195,12 +195,12 @@ def parse_nem12_rows(
     if not observed_900_record:
         log.warning("Missing end of data (900) row.")
 
-    return NEMFile(header=header, readings=readings, transactions=trans)
+    return NEMData(header=header, readings=readings, transactions=trans)
 
 
 def parse_nem13_rows(
     nem_list: Iterable, header: HeaderRecord, file_name=None
-) -> NEMFile:
+) -> NEMData:
     """Parse NEM row iterator and return meter readings named tuple"""
     # readings nested by NMI then channel
     readings: Dict[str, Dict[str, List[Reading]]] = {}
@@ -242,7 +242,7 @@ def parse_nem13_rows(
             log.warning(
                 "Record indicator %s not supported and was skipped", record_indicator
             )
-    return NEMFile(header=header, readings=readings, transactions=trans)
+    return NEMData(header=header, readings=readings, transactions=trans)
 
 
 def calculate_manual_reading(basic_data: BasicMeterData) -> Reading:

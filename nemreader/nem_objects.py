@@ -113,7 +113,7 @@ class B2BDetails13(NamedTuple):
     current_ret_service_order: str
 
 
-class NEMFile(BaseModel):
+class NEMData(BaseModel):
     """Represents a meter reading"""
 
     header: HeaderRecord
