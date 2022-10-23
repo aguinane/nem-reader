@@ -33,14 +33,14 @@ def callback(
 
 
 @app.command()
-def list_nmis(NEMData: Path, verbose: bool = typer.Option(False, "--verbose", "-v")):
+def list_nmis(nemfile: Path, verbose: bool = typer.Option(False, "--verbose", "-v")):
     if verbose:
         log_level = "DEBUG"
     else:
         log_level = "WARNING"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
 
-    nmis = list(nmis_in_file(NEMData))
+    nmis = list(nmis_in_file(nemfile))
     typer.echo("The following NMI[suffix] exist in this file:")
     for nmi, suffixes in nmis:
         suffix_str = ",".join(suffixes)
@@ -49,7 +49,7 @@ def list_nmis(NEMData: Path, verbose: bool = typer.Option(False, "--verbose", "-
 
 @app.command()
 def output_csv(
-    NEMData: Path,
+    nemfile: Path,
     verbose: bool = typer.Option(False, "--verbose", "-v"),
     set_interval: Optional[int] = None,
     outdir: Path = typer.Option(
@@ -62,20 +62,20 @@ def output_csv(
 ):
     """Output NEM file to transposed CSV.
 
-    NEMData is the name of the file to parse.
+    nemfile is the name of the file to parse.
     """
     if verbose:
         log_level = "DEBUG"
     else:
         log_level = "WARNING"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
-    for fname in output_as_csv(NEMData, output_dir=outdir, set_interval=set_interval):
+    for fname in output_as_csv(nemfile, output_dir=outdir, set_interval=set_interval):
         typer.echo(f"Created {fname}")
 
 
 @app.command()
 def output_csv_daily(
-    NEMData: Path,
+    nemfile: Path,
     verbose: bool = typer.Option(False, "--verbose", "-v"),
     outdir: Path = typer.Option(
         DEFAULT_DIR,
@@ -87,20 +87,20 @@ def output_csv_daily(
 ):
     """Output NEM file to transposed CSV.
 
-    NEMData is the name of the file to parse.
+    nemfile is the name of the file to parse.
     """
     if verbose:
         log_level = "DEBUG"
     else:
         log_level = "WARNING"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
-    fname = output_as_daily_csv(NEMData, output_dir=outdir)
+    fname = output_as_daily_csv(nemfile, output_dir=outdir)
     typer.echo(f"Created {fname}")
 
 
 @app.command()
 def output_sqlite(
-    NEMData: Path,
+    nemfile: Path,
     outdir: Path = typer.Option(
         DEFAULT_DIR,
         exists=True,
@@ -113,19 +113,19 @@ def output_sqlite(
 ):
     """Output NEM file to transposed CSV.
 
-    NEMData is the name of the file to parse.
+    nemfile is the name of the file to parse.
     """
     if verbose:
         log_level = "DEBUG"
     else:
         log_level = "WARNING"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
-    if os.path.isdir(NEMData):
-        typer.echo(f"Getting files in directory {NEMData}")
-        files = list(NEMData.glob("*.csv"))
-        files += list(NEMData.glob("*.zip"))
+    if os.path.isdir(nemfile):
+        typer.echo(f"Getting files in directory {nemfile}")
+        files = list(nemfile.glob("*.csv"))
+        files += list(nemfile.glob("*.zip"))
     else:
-        files = [NEMData]
+        files = [nemfile]
     for fp in files:
         typer.echo(f"Processing {fp}")
         try:
