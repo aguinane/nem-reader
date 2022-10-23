@@ -21,6 +21,45 @@ from .nem_objects import (
 log = logging.getLogger(__name__)
 
 
+class NEMFile:
+    """An NEM file object"""
+
+    def __init__(self, file_path: str, strict: bool = False) -> None:
+
+        self.file_path = file_path
+        self.strict = strict
+
+    def __repr__(self):
+        return f"<NEMFile {self.file_path}>"
+
+    @property
+    def zipped(self) -> bool:
+        """Check whether file is zipped or not"""
+        _, file_extension = os.path.splitext(self.file_path)
+        if file_extension.lower() == ".zip":
+            return True
+        return False
+
+    def nem_data(self) -> NEMData:
+        if self.zipped:
+            log.debug("Extracting zip file")
+            with zipfile.ZipFile(self.file_path, "r") as archive:
+                for csv_file in archive.namelist():
+                    with archive.open(csv_file) as csv_text:
+                        # Zip file is open in binary mode
+                        # So decode then convert back to list
+                        nmi_file = csv_text.read().decode("utf-8").splitlines()
+
+                        return parse_nem_file(
+                            nmi_file,
+                            file_name=csv_file,
+                            ignore_missing_header=self.strict,
+                        )
+
+        with open(self.file_path) as nmi_file:
+            return parse_nem_file(nmi_file, ignore_missing_header=self.strict)
+
+
 def flatten_list(l: List[list]) -> list:
     """takes a list of lists, l and returns a flat list"""
     return [v for inner_l in l for v in inner_l]
@@ -35,24 +74,8 @@ def read_nem_file(file_path: str, ignore_missing_header=False) -> NEMData:
     :returns: The file that was created
     """
 
-    _, file_extension = os.path.splitext(file_path)
-    if file_extension.lower() == ".zip":
-        log.debug("Extracting zip file")
-        with zipfile.ZipFile(file_path, "r") as archive:
-            for csv_file in archive.namelist():
-                with archive.open(csv_file) as csv_text:
-                    # Zip file is open in binary mode
-                    # So decode then convert back to list
-                    nmi_file = csv_text.read().decode("utf-8").splitlines()
-
-                    return parse_nem_file(
-                        nmi_file,
-                        file_name=csv_file,
-                        ignore_missing_header=ignore_missing_header,
-                    )
-
-    with open(file_path) as nmi_file:
-        return parse_nem_file(nmi_file, ignore_missing_header=ignore_missing_header)
+    nf = NEMFile(file_path, strict=ignore_missing_header)
+    return nf.nem_data()
 
 
 def parse_nem_file(nem_file, file_name="", ignore_missing_header=False) -> NEMData:
