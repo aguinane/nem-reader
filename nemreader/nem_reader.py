@@ -41,6 +41,9 @@ class NEMFile:
         return False
 
     def nem_data(self) -> NEMData:
+
+        ignore_missing_header = not self.strict
+
         if self.zipped:
             log.debug("Extracting zip file")
             with zipfile.ZipFile(self.file_path, "r") as archive:
@@ -53,11 +56,11 @@ class NEMFile:
                         return parse_nem_file(
                             nmi_file,
                             file_name=csv_file,
-                            ignore_missing_header=self.strict,
+                            ignore_missing_header=ignore_missing_header,
                         )
 
         with open(self.file_path) as nmi_file:
-            return parse_nem_file(nmi_file, ignore_missing_header=self.strict)
+            return parse_nem_file(nmi_file, ignore_missing_header=ignore_missing_header)
 
 
 def flatten_list(l: List[list]) -> list:

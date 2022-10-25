@@ -1,15 +1,18 @@
-import nemreader as nr
 import pytest
+
+from nemreader import NEMFile
 
 
 def test_correct_NMIs():
-    meter_data = nr.read_nem_file("examples/unzipped/Example_NEM12_actual_interval.csv")
+    nf = NEMFile("examples/unzipped/Example_NEM12_actual_interval.csv", strict=True)
+    meter_data = nf.nem_data()
     assert len(meter_data.readings) == 1
     assert "VABD000163" in meter_data.readings
 
 
 def test_correct_channels():
-    meter_data = nr.read_nem_file("examples/unzipped/Example_NEM12_actual_interval.csv")
+    nf = NEMFile("examples/unzipped/Example_NEM12_actual_interval.csv", strict=True)
+    meter_data = nf.nem_data()
     readings = meter_data.readings["VABD000163"]
     assert len(readings) == 2
     assert "E1" in readings
@@ -17,7 +20,8 @@ def test_correct_channels():
 
 
 def test_correct_records():
-    meter_data = nr.read_nem_file("examples/unzipped/Example_NEM12_actual_interval.csv")
+    nf = NEMFile("examples/unzipped/Example_NEM12_actual_interval.csv", strict=True)
+    meter_data = nf.nem_data()
     readings = meter_data.readings["VABD000163"]
 
     assert len(readings["E1"]) == 48

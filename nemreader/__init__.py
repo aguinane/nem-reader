@@ -8,7 +8,7 @@
 import logging
 from logging import NullHandler
 
-from .nem_reader import parse_nem_file, read_nem_file
+from .nem_reader import NEMFile, parse_nem_file, read_nem_file
 from .outputs import (
     nmis_in_file,
     output_as_csv,
@@ -20,6 +20,7 @@ from .version import __version__
 
 __all__ = [
     "__version__",
+    "NEMFile",
     "read_nem_file",
     "parse_nem_file",
     "nmis_in_file",

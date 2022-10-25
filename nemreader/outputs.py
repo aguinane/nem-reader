@@ -8,7 +8,7 @@ import pandas as pd
 from sqlite_utils import Database
 
 from .nem_objects import Reading
-from .nem_reader import read_nem_file
+from .nem_reader import NEMFile, read_nem_file
 from .split_days import make_set_interval, split_multiday_reads
 
 log = logging.getLogger(__name__)
@@ -16,7 +16,8 @@ log = logging.getLogger(__name__)
 
 def nmis_in_file(file_name) -> Generator[Tuple[str, List[str]], None, None]:
     """Return list of NMIs in file"""
-    m = read_nem_file(file_name)
+    nf = NEMFile(file_name, strict=False)
+    m = nf.nem_data()
     for nmi in m.transactions.keys():
         suffixes = list(m.transactions[nmi].keys())
         yield nmi, suffixes
@@ -71,11 +72,12 @@ def output_as_data_frames(
     file_name,
     split_days: bool = True,
     set_interval: Optional[int] = None,
-    ignore_missing_header: bool = False,
+    strict: bool = False,
 ) -> List[Tuple[str, pd.DataFrame]]:
     """Return list of data frames for each NMI"""
 
-    m = read_nem_file(file_name, ignore_missing_header=ignore_missing_header)
+    nf = NEMFile(file_name, strict=False)
+    m = nf.nem_data()
     data_frames = []
     for (nmi, nmi_readings) in m.readings.items():
         nmi_readings = m.readings[nmi]
@@ -103,7 +105,8 @@ def output_as_csv(file_name, output_dir=".", set_interval: Optional[int] = None)
     output_dir = Path(output_dir)
     output_paths = []
     os.makedirs(output_dir, exist_ok=True)
-    m = read_nem_file(file_name)
+    nf = NEMFile(file_name, strict=False)
+    m = nf.nem_data()
     nmis = m.readings.keys()
     for nmi in nmis:
         channels = list(m.transactions[nmi])
@@ -198,7 +201,8 @@ def output_as_daily_csv(file_name, output_dir="."):
     output_file = f"{file_stem}_daily_totals.csv"
     output_path = output_dir / output_file
 
-    m = read_nem_file(file_name)
+    nf = NEMFile(file_name, strict=False)
+    m = nf.nem_data()
     nmis = m.readings.keys()
     all_rows = []
     headings = [
@@ -233,7 +237,8 @@ def output_as_sqlite(
     output_path = output_dir / "nemdata.db"
     db = Database(output_path)
 
-    m = read_nem_file(file_name)
+    nf = NEMFile(file_name, strict=False)
+    m = nf.nem_data()
     nmis = m.readings.keys()
     for nmi in nmis:
         channels = list(m.transactions[nmi].keys())

@@ -1,15 +1,15 @@
 """ Test Suite
 """
 
-import nemreader as nr
 import pytest
+
+from nemreader import NEMFile
 
 
 def test_nem13_readings():
     """Test the NEM13 consumption data"""
-    meter_data = nr.read_nem_file(
-        "examples/unzipped/Example_NEM13_consumption_data.csv"
-    )
+    nf = NEMFile("examples/unzipped/Example_NEM13_consumption_data.csv", strict=True)
+    meter_data = nf.nem_data()
     readings = meter_data.readings["VABC005890"]["11"]
     unit_count = 0
     for record in readings:
