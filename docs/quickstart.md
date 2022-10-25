@@ -67,7 +67,7 @@ from nemreader import output_as_data_frames
 # Setup Pandas DataFrame
 dfs = output_as_data_frames("examples/nem12/NEM12#000000000000002#CNRGYMDP#NEMMCO.zip")
 nmi, df = dfs[0] # Return data for first NMI in file
-df.set_index("period_start", inplace=True)
+df.set_index("t_start", inplace=True)
 
 # Chart time of day profile
 hourly = df.groupby([(df.index.hour)]).sum()
