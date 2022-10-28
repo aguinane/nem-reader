@@ -113,6 +113,13 @@ class B2BDetails13(NamedTuple):
     current_ret_service_order: str
 
 
+class NEMReadings(BaseModel):
+    """Represents a meter reading"""
+
+    readings: Dict[str, Dict[str, List[Reading]]]
+    transactions: Dict[str, Dict[str, list]]
+
+
 class NEMData(BaseModel):
     """Represents a meter reading"""
 

@@ -1,5 +1,4 @@
 import datetime
-import os
 
 from nemreader import NEMFile
 

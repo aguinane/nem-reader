@@ -8,7 +8,7 @@ import pandas as pd
 from sqlite_utils import Database
 
 from .nem_objects import Reading
-from .nem_reader import NEMFile, read_nem_file
+from .nem_reader import NEMFile
 from .split_days import make_set_interval, split_multiday_reads
 
 log = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ def get_data_frame(
     split_days: bool = False,
     set_interval: Optional[int] = None,
 ) -> pd.DataFrame:
-    """Get a Pandas DataFrame for Point(s)"""
+    """Get a Pandas DataFrame for NMI"""
     if split_days or set_interval:
         # Split any readings that are >24 hours
         for ch in channels:

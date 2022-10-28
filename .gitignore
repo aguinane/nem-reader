@@ -94,6 +94,6 @@ ENV/
 .pytest_cache/
 
 # Ignore CSVs unless in example folder
-*.csv
-*.db
+/*.csv
 !examples/*.csv
+*.db

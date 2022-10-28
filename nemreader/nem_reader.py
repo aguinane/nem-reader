@@ -14,6 +14,7 @@ from .nem_objects import (
     HeaderRecord,
     IntervalRecord,
     NEMData,
+    NEMReadings,
     NmiDetails,
     Reading,
 )
@@ -40,10 +41,43 @@ class NEMFile:
             return True
         return False
 
+    def parse_nem_file(self, nem_file, file_name="") -> NEMReadings:
+        """Parse NEM file and return meter readings named tuple"""
+        reader = csv.reader(nem_file, delimiter=",")
+        first_row = next(reader, None)
+
+        # Some Powercor/Citipower files have empty line at start, skip if so.
+        if not first_row:
+            first_row = next(reader, None)
+
+        try:
+            record_indicator = int(first_row[0])
+        except Exception:
+            record_indicator = 0
+
+        if not first_row or record_indicator != 100:
+            if self.strict:
+                raise ValueError("NEM Files must start with a 100 row")
+            else:
+                log.warning("Missing header (100) row, assuming NEM12.")
+                header = HeaderRecord("NEM12", None, "", "", file_name, assumed=True)
+        else:
+            header = parse_100_row(first_row, file_name)
+            if header.version_header not in ["NEM12", "NEM13"]:
+                raise ValueError("Invalid NEM version {}".format(header.version_header))
+
+        self.header = header
+        if header.assumed:
+            # We have to parse the first row again so we don't miss any data.
+            reader = chain([first_row], reader)
+            return parse_nem12_rows(reader, file_name=nem_file)
+        if header.version_header == "NEM12":
+            return parse_nem12_rows(reader, file_name=nem_file)
+        else:
+            return parse_nem13_rows(reader)
+
     def nem_data(self) -> NEMData:
-
-        ignore_missing_header = not self.strict
-
+        """Return data in legacy data format"""
         if self.zipped:
             log.debug("Extracting zip file")
             with zipfile.ZipFile(self.file_path, "r") as archive:
@@ -52,15 +86,20 @@ class NEMFile:
                         # Zip file is open in binary mode
                         # So decode then convert back to list
                         nmi_file = csv_text.read().decode("utf-8").splitlines()
-
-                        return parse_nem_file(
-                            nmi_file,
-                            file_name=csv_file,
-                            ignore_missing_header=ignore_missing_header,
+                        reads = self.parse_nem_file(nmi_file, file_name=csv_file)
+                        return NEMData(
+                            header=self.header,
+                            readings=reads.readings,
+                            transactions=reads.transactions,
                         )
 
         with open(self.file_path) as nmi_file:
-            return parse_nem_file(nmi_file, ignore_missing_header=ignore_missing_header)
+            reads = self.parse_nem_file(nmi_file)
+            return NEMData(
+                header=self.header,
+                readings=reads.readings,
+                transactions=reads.transactions,
+            )
 
 
 def flatten_list(l: List[list]) -> list:
@@ -81,52 +120,6 @@ def read_nem_file(file_path: str, ignore_missing_header=False) -> NEMData:
     return nf.nem_data()
 
 
-def parse_nem_file(nem_file, file_name="", ignore_missing_header=False) -> NEMData:
-    """Parse NEM file and return meter readings named tuple"""
-    reader = csv.reader(nem_file, delimiter=",")
-    first_row = next(reader, None)
-
-    # Some Powercor/Citipower files have empty line at start, skip if so.
-    if not first_row:
-        first_row = next(reader, None)
-
-    header = parse_header_row(
-        first_row,
-        ignore_missing_header=ignore_missing_header,
-        file_name=getattr(nem_file, "name", file_name),
-    )
-
-    if header.assumed:
-        # We have to parse the first row again so we don't miss any data.
-        reader = chain([first_row], reader)
-        return parse_nem12_rows(reader, header=header, file_name=nem_file)
-    if header.version_header == "NEM12":
-        return parse_nem12_rows(reader, header=header, file_name=nem_file)
-    else:
-        return parse_nem13_rows(reader, header=header, file_name=nem_file)
-
-
-def parse_header_row(
-    row: List[Any], ignore_missing_header=False, file_name=None
-) -> HeaderRecord:
-    """Parse first row of NEM file"""
-
-    record_indicator = int(row[0])
-    if record_indicator != 100:
-        if ignore_missing_header:
-            log.warning("Missing header (100) row, assuming NEM12.")
-            header = HeaderRecord("NEM12", None, "", "", file_name, True)
-        else:
-            raise ValueError("NEM Files must start with a 100 row")
-    else:
-        header = parse_100_row(row, file_name)
-        if header.version_header not in ["NEM12", "NEM13"]:
-            raise ValueError("Invalid NEM version {}".format(header.version_header))
-
-    log.debug("Parsing %s file %s ...", header.version_header, file_name)
-    return header
-
-
 def parse_100_row(row: List[Any], file_name: str) -> HeaderRecord:
     """Parse header record (100)"""
     return HeaderRecord(
@@ -134,9 +127,7 @@ def parse_100_row(row: List[Any], file_name: str) -> HeaderRecord:
     )
 
 
-def parse_nem12_rows(
-    nem_list: Iterable, header: HeaderRecord, file_name=None
-) -> NEMData:
+def parse_nem12_rows(nem_list: Iterable, file_name=None) -> NEMReadings:
     """Parse NEM row iterator and return meter readings named tuple"""
     # readings nested by NMI then channel
     readings: Dict[str, Dict[str, List[Reading]]] = {}
@@ -221,12 +212,10 @@ def parse_nem12_rows(
     if not observed_900_record:
         log.warning("Missing end of data (900) row.")
 
-    return NEMData(header=header, readings=readings, transactions=trans)
+    return NEMReadings(readings=readings, transactions=trans)
 
 
-def parse_nem13_rows(
-    nem_list: Iterable, header: HeaderRecord, file_name=None
-) -> NEMData:
+def parse_nem13_rows(nem_list: Iterable) -> NEMReadings:
     """Parse NEM row iterator and return meter readings named tuple"""
     # readings nested by NMI then channel
     readings: Dict[str, Dict[str, List[Reading]]] = {}
@@ -268,7 +257,7 @@ def parse_nem13_rows(
             log.warning(
                 "Record indicator %s not supported and was skipped", record_indicator
             )
-    return NEMData(header=header, readings=readings, transactions=trans)
+    return NEMReadings(readings=readings, transactions=trans)
 
 
 def calculate_manual_reading(basic_data: BasicMeterData) -> Reading:

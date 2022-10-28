@@ -132,4 +132,4 @@ def output_sqlite(
             output_as_sqlite(fp, output_dir=outdir, make_fivemins=five_min)
         except Exception:
             typer.echo(f"Not a valid nem file: {fp}")
-    typer.echo(f"Finished exporting to DB.")
+    typer.echo("Finished exporting to DB.")
