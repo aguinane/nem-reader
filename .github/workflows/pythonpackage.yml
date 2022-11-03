@@ -4,12 +4,10 @@ on: ["push", "pull_request"]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
-
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
@@ -30,13 +28,13 @@ jobs:
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
-      run: |
-        pip install pytest pytest-cov
-        pytest --cov=nemreader --cov-report=xml
-    - name: Coveralls
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-      run: |
-        pip install coveralls
-        coverage run --source=nemreader -m pytest tests/
-        coveralls
+        run: |
+          pip install pytest pytest-cov
+          pytest --cov=nemreader --cov-report=xml
+      - name: Coveralls
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        run: |
+          pip install coveralls
+          coverage run --source=nemreader -m pytest tests/
+          coveralls
