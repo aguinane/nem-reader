@@ -5,6 +5,7 @@ import zipfile
 from datetime import datetime, timedelta
 from itertools import chain, islice
 from typing import Any, Dict, Iterable, List, Optional
+import pandas as pd
 
 from .nem_objects import (
     B2BDetails12,
@@ -100,6 +101,26 @@ class NEMFile:
                 readings=reads.readings,
                 transactions=reads.transactions,
             )
+
+    def get_data_frame(self) -> pd.DataFrame:
+        """Return NEMData as a DataFrame"""
+        nd = self.nem_data()
+        frames = []
+        for nmi in nd.readings.keys():
+            for suffix in nd.readings[nmi].keys():
+                reads = nd.readings[nmi][suffix]
+                data = {
+                    "nmi": [nmi for _ in range(len(reads))],
+                    "suffix": [suffix for _ in range(len(reads))],
+                    "serno": [x.meter_serial_number for x in reads],
+                    "t_start": [x.t_start for x in reads],
+                    "t_end": [x.t_end for x in reads],
+                    "quality": [x.quality_method for x in reads],
+                    "evt_code": [x.event_code for x in reads],
+                    "evt_desc": [x.event_desc for x in reads],
+                }
+                frames.append(pd.DataFrame(data))
+        return pd.concat(frames)
 
 
 def flatten_list(l: List[list]) -> list:
