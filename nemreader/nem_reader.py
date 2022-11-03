@@ -115,6 +115,7 @@ class NEMFile:
                     "serno": [x.meter_serial_number for x in reads],
                     "t_start": [x.t_start for x in reads],
                     "t_end": [x.t_end for x in reads],
+                    "value": [x.read_value for x in reads],
                     "quality": [x.quality_method for x in reads],
                     "evt_code": [x.event_code for x in reads],
                     "evt_desc": [x.event_desc for x in reads],
