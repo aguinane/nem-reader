@@ -5,6 +5,7 @@ import zipfile
 from datetime import datetime, timedelta
 from itertools import chain, islice
 from typing import Any, Dict, Iterable, List, Optional
+
 import pandas as pd
 
 from .nem_objects import (
@@ -19,6 +20,7 @@ from .nem_objects import (
     NmiDetails,
     Reading,
 )
+from .split_days import make_set_interval, split_multiday_reads
 
 log = logging.getLogger(__name__)
 
@@ -102,13 +104,22 @@ class NEMFile:
                 transactions=reads.transactions,
             )
 
-    def get_data_frame(self) -> pd.DataFrame:
+    def get_data_frame(
+        self, split_days: bool = False, set_interval: Optional[int] = None
+    ) -> pd.DataFrame:
         """Return NEMData as a DataFrame"""
         nd = self.nem_data()
         frames = []
         for nmi in nd.readings.keys():
             for suffix in nd.readings[nmi].keys():
                 reads = nd.readings[nmi][suffix]
+
+                if split_days or set_interval:
+                    reads = list(split_multiday_reads(reads))
+
+                if set_interval:
+                    reads = list(make_set_interval(reads, set_interval))
+
                 data = {
                     "nmi": [nmi for _ in range(len(reads))],
                     "suffix": [suffix for _ in range(len(reads))],
