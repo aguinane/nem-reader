@@ -4,7 +4,7 @@ import os
 import zipfile
 from datetime import datetime, timedelta
 from itertools import chain, islice
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple
 
 import pandas as pd
 
@@ -32,6 +32,7 @@ class NEMFile:
 
         self.file_path = file_path
         self.strict = strict
+        self.nmis: set = set()
 
     def __repr__(self):
         return f"<NEMFile {self.file_path}>"
@@ -90,6 +91,8 @@ class NEMFile:
                         # So decode then convert back to list
                         nmi_file = csv_text.read().decode("utf-8").splitlines()
                         reads = self.parse_nem_file(nmi_file, file_name=csv_file)
+                        for nmi in reads.transactions.keys():
+                            self.nmis.add(nmi)
                         return NEMData(
                             header=self.header,
                             readings=reads.readings,
@@ -98,6 +101,8 @@ class NEMFile:
 
         with open(self.file_path) as nmi_file:
             reads = self.parse_nem_file(nmi_file)
+            for nmi in reads.transactions.keys():
+                self.nmis.add(nmi)
             return NEMData(
                 header=self.header,
                 readings=reads.readings,
@@ -133,6 +138,37 @@ class NEMFile:
                 }
                 frames.append(pd.DataFrame(data))
         return pd.concat(frames)
+
+    def get_pivot_data_frame(
+        self,
+        split_days: bool = False,
+        set_interval: Optional[int] = None,
+        include_serno: bool = False,
+    ) -> pd.DataFrame:
+        """Return NEMData as a DataFrame with suffix columns"""
+        df = self.get_data_frame(split_days, set_interval)
+        pivot_index = ["nmi", "t_start", "t_end", "quality", "evt_code", "evt_desc"]
+        if include_serno:
+            pivot_index.append("serno")
+        df_pivoted = df.pivot(
+            index=pivot_index,
+            columns="suffix",
+            values="value",
+        ).reset_index()
+        return df_pivoted
+
+    def get_per_nmi_dfs(
+        self,
+        split_days: bool = False,
+        set_interval: Optional[int] = None,
+        include_serno: bool = False,
+    ) -> Generator[Tuple[str, pd.DataFrame], None, None]:
+        df = self.get_pivot_data_frame(split_days, set_interval, include_serno)
+        nmis = df.nmi.unique()
+        for nmi in nmis:
+            nmi_df = df[(df["nmi"] == nmi)]
+            del nmi_df["nmi"]
+            yield nmi, nmi_df
 
 
 def flatten_list(l: List[list]) -> list:

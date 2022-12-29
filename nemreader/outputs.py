@@ -75,19 +75,12 @@ def output_as_data_frames(
     strict: bool = False,
 ) -> List[Tuple[str, pd.DataFrame]]:
     """Return list of data frames for each NMI"""
-
-    nf = NEMFile(file_name, strict=False)
-    m = nf.nem_data()
+    nf = NEMFile(file_name, strict=strict)
     data_frames = []
-    for (nmi, nmi_readings) in m.readings.items():
-        nmi_readings = m.readings[nmi]
-        channels = list(m.transactions[nmi])
-        nmi_df = get_data_frame(
-            channels,
-            nmi_readings,
-            split_days=split_days,
-            set_interval=set_interval,
-        )
+    for nmi, nmi_df in nf.get_per_nmi_dfs(
+        split_days=split_days, set_interval=set_interval
+    ):
+        nmi_df.rename(columns={"quality": "quality_method"}, inplace=True)
         data_frames.append((nmi, nmi_df))
     return data_frames
 
