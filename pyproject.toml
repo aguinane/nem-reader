@@ -18,7 +18,8 @@ dynamic = ["version", "description"]
 dependencies = ["pandas", "pydantic", "sqlite_utils", "typer"]
 
 [project.optional-dependencies]
-test = ["pytest >=2.7.3", "pytest-cov"]
+test = ["pytest >=2.7.3", "pytest-cov", "mypy"]
+dev = ["black", "flake8", "flake8-bugbear", "pep8-naming", "flake8-builtins"]
 
 [project.urls]
 Source = "https://github.com/aguinane/nem-reader/"
