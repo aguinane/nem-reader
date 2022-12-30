@@ -33,6 +33,7 @@ class NEMFile:
         self.file_path = file_path
         self.strict = strict
         self.nmis: set = set()
+        self.nmi_channels: dict = {}
 
     def __repr__(self):
         return f"<NEMFile {self.file_path}>"
@@ -93,6 +94,8 @@ class NEMFile:
                         reads = self.parse_nem_file(nmi_file, file_name=csv_file)
                         for nmi in reads.transactions.keys():
                             self.nmis.add(nmi)
+                            suffixes = list(reads.transactions[nmi].keys())
+                            self.nmi_channels[nmi] = suffixes
                         return NEMData(
                             header=self.header,
                             readings=reads.readings,
@@ -103,6 +106,8 @@ class NEMFile:
             reads = self.parse_nem_file(nmi_file)
             for nmi in reads.transactions.keys():
                 self.nmis.add(nmi)
+                suffixes = list(reads.transactions[nmi].keys())
+                self.nmi_channels[nmi] = suffixes
             return NEMData(
                 header=self.header,
                 readings=reads.readings,

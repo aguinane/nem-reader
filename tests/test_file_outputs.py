@@ -1,4 +1,23 @@
-from nemreader import output_as_csv, output_as_daily_csv, output_as_data_frames
+from nemreader import (
+    nmis_in_file,
+    output_as_csv,
+    output_as_daily_csv,
+    output_as_data_frames,
+)
+
+
+def test_nmi_output(tmpdir):
+    """Check NMIs in file"""
+    file_name = "examples/unzipped/Example_NEM12_multiple_meters.csv"
+    items = list(nmis_in_file(file_name))
+    nmis = [x[0] for x in items]
+    assert "NCDE001111" in nmis
+    assert "NDDD001888" in nmis
+
+    suffixes = [x[1] for x in items]
+    assert "E1" in suffixes[0]
+    assert "E1" not in suffixes[1]
+    assert "B1" in suffixes[1]
 
 
 def test_csv_output(tmpdir):

@@ -1,6 +1,7 @@
 import csv
 import logging
 import os
+import warnings
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional, Tuple
 
@@ -17,9 +18,8 @@ log = logging.getLogger(__name__)
 def nmis_in_file(file_name) -> Generator[Tuple[str, List[str]], None, None]:
     """Return list of NMIs in file"""
     nf = NEMFile(file_name, strict=False)
-    m = nf.nem_data()
-    for nmi in m.transactions.keys():
-        suffixes = list(m.transactions[nmi].keys())
+    nf.nem_data()
+    for nmi, suffixes in nf.nmi_channels.items():
         yield nmi, suffixes
 
 
@@ -30,6 +30,9 @@ def get_data_frame(
     set_interval: Optional[int] = None,
 ) -> pd.DataFrame:
     """Get a Pandas DataFrame for NMI"""
+
+    warnings.warn("nemreader.get_data_frame is deprecated`.", DeprecationWarning)
+
     if split_days or set_interval:
         # Split any readings that are >24 hours
         for ch in channels:
@@ -99,15 +102,14 @@ def output_as_csv(file_name, output_dir=".", set_interval: Optional[int] = None)
     output_paths = []
     os.makedirs(output_dir, exist_ok=True)
     nf = NEMFile(file_name, strict=False)
-    m = nf.nem_data()
-    nmis = m.readings.keys()
-    for nmi in nmis:
-        channels = list(m.transactions[nmi])
-        df = get_data_frame(channels, m.readings[nmi], set_interval=set_interval)
-        last_date = df.iloc[-1][1].strftime("%Y%m%d")
+    df = nf.get_pivot_data_frame(set_interval=set_interval)
+    for nmi in nf.nmis:
+        nmi_df = df[(df["nmi"] == nmi)]
+        del nmi_df["nmi"]
+        last_date = nmi_df.iloc[-1][1].strftime("%Y%m%d")
         output_file = f"{nmi}_{last_date}_transposed.csv"
         output_path = output_dir / output_file
-        df.to_csv(output_path, index=False)
+        nmi_df.to_csv(output_path, index=False)
         output_paths.append(output_path)
     return output_paths
 
