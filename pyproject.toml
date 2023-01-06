@@ -31,7 +31,7 @@ nemreader = "nemreader.cli:cli"
 [tool.isort]
 profile = "black"
 
-[tool.pytest]
+[tool.pytest.ini_options]
 addopts = "-ra --failed-first --showlocals --durations=3 --cov=nemreader"
 
 [tool.coverage.run]
