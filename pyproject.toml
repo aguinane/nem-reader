@@ -30,7 +30,7 @@ Source = "https://github.com/aguinane/nem-reader/"
 Documentation = "https://nem-reader.readthedocs.io/en/latest/"
 
 [project.scripts]
-nemreader = "nemreader.cli:cli"
+nemreader = "nemreader.cli:app"
 
 [tool.isort]
 profile = "black"
