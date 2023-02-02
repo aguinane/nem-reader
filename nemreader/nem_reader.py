@@ -86,21 +86,24 @@ class NEMFile:
         if self.zipped:
             log.debug("Extracting zip file")
             with zipfile.ZipFile(self.file_path, "r") as archive:
-                for csv_file in archive.namelist():
-                    with archive.open(csv_file) as csv_text:
-                        # Zip file is open in binary mode
-                        # So decode then convert back to list
-                        nmi_file = csv_text.read().decode("utf-8").splitlines()
-                        reads = self.parse_nem_file(nmi_file, file_name=csv_file)
-                        for nmi in reads.transactions.keys():
-                            self.nmis.add(nmi)
-                            suffixes = list(reads.transactions[nmi].keys())
-                            self.nmi_channels[nmi] = suffixes
-                        return NEMData(
-                            header=self.header,
-                            readings=reads.readings,
-                            transactions=reads.transactions,
-                        )
+                files = archive.namelist()
+                if len(files) > 1:
+                    raise ValueError("Only zip files with one file are supported")
+                csv_file = files[0]
+                with archive.open(csv_file) as csv_text:
+                    # Zip file is open in binary mode
+                    # So decode then convert back to list
+                    nmi_file = csv_text.read().decode("utf-8").splitlines()
+                    reads = self.parse_nem_file(nmi_file, file_name=csv_file)
+                    for nmi in reads.transactions.keys():
+                        self.nmis.add(nmi)
+                        suffixes = list(reads.transactions[nmi].keys())
+                        self.nmi_channels[nmi] = suffixes
+                    return NEMData(
+                        header=self.header,
+                        readings=reads.readings,
+                        transactions=reads.transactions,
+                    )
 
         with open(self.file_path) as nmi_file:
             reads = self.parse_nem_file(nmi_file)
