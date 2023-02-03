@@ -58,8 +58,6 @@ pluggy==1.0.0
     # via pytest
 pycodestyle==2.10.0
     # via flake8
-pydantic==1.10.2
-    # via nemreader (pyproject.toml)
 pyflakes==3.0.1
     # via flake8
 pytest==7.2.0
@@ -91,6 +89,4 @@ tomli==2.0.1
 typer==0.7.0
     # via nemreader (pyproject.toml)
 typing-extensions==4.4.0
-    # via
-    #   mypy
-    #   pydantic
+    # via mypy

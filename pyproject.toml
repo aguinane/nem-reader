@@ -19,7 +19,7 @@ classifiers = [
 keywords = ["energy", "NEM12", "NEM13"]
 requires-python = ">=3.8"
 dynamic = ["version", "description"]
-dependencies = ["pandas", "pydantic", "sqlite_utils", "typer"]
+dependencies = ["pandas", "sqlite_utils", "typer"]
 
 [project.optional-dependencies]
 test = ["pytest >=2.7.3", "pytest-cov", "mypy"]

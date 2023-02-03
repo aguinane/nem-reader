@@ -1,9 +1,6 @@
 from datetime import datetime
 from typing import Dict, List, NamedTuple, Optional
 
-from pydantic import BaseModel
-
-
 class HeaderRecord(NamedTuple):
     """Header record (100)"""
 
@@ -112,21 +109,34 @@ class B2BDetails13(NamedTuple):
     current_trans_code: str
     current_ret_service_order: str
 
-
-class NEMReadings(BaseModel):
+class NEMReadings:
     """Represents a meter reading"""
 
     readings: Dict[str, Dict[str, List[Reading]]]
     transactions: Dict[str, Dict[str, list]]
 
+    def __init__(self, readings, transactions):
+        self.readings = readings
+        self.transactions = transactions
 
-class NEMData(BaseModel):
+    class Config:
+        copy_on_model_validation = 'shallow' # faster
+
+class NEMData:
     """Represents a meter reading"""
 
     header: HeaderRecord
     readings: Dict[str, Dict[str, List[Reading]]]
     transactions: Dict[str, Dict[str, list]]
 
+    def __init__(self, header, readings, transactions):
+        self.header = header
+        self.readings = readings
+        self.transactions = transactions
+
     @property
     def nmis(self) -> List[str]:
         return list(self.transactions.keys())
+
+    class Config:
+        copy_on_model_validation = 'shallow' # faster

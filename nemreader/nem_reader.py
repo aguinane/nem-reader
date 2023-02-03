@@ -94,28 +94,28 @@ class NEMFile:
                     # Zip file is open in binary mode
                     # So decode then convert back to list
                     nmi_file = csv_text.read().decode("utf-8").splitlines()
-                    reads = self.parse_nem_file(nmi_file, file_name=csv_file)
-                    for nmi in reads.transactions.keys():
-                        self.nmis.add(nmi)
-                        suffixes = list(reads.transactions[nmi].keys())
-                        self.nmi_channels[nmi] = suffixes
-                    return NEMData(
-                        header=self.header,
-                        readings=reads.readings,
-                        transactions=reads.transactions,
-                    )
+                reads = self.parse_nem_file(nmi_file, file_name=csv_file)
+                for nmi in reads.transactions.keys():
+                    self.nmis.add(nmi)
+                    suffixes = list(reads.transactions[nmi].keys())
+                    self.nmi_channels[nmi] = suffixes
+                return NEMData(
+                    header=self.header,
+                    readings=reads.readings,
+                    transactions=reads.transactions,
+                )
 
         with open(self.file_path) as nmi_file:
             reads = self.parse_nem_file(nmi_file)
-            for nmi in reads.transactions.keys():
-                self.nmis.add(nmi)
-                suffixes = list(reads.transactions[nmi].keys())
-                self.nmi_channels[nmi] = suffixes
-            return NEMData(
-                header=self.header,
-                readings=reads.readings,
-                transactions=reads.transactions,
-            )
+        for nmi in reads.transactions.keys():
+            self.nmis.add(nmi)
+            suffixes = list(reads.transactions[nmi].keys())
+            self.nmi_channels[nmi] = suffixes
+        return NEMData(
+            header=self.header,
+            readings=reads.readings,
+            transactions=reads.transactions,
+        )
 
     def get_data_frame(
         self, split_days: bool = False, set_interval: Optional[int] = None
