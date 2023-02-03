@@ -212,81 +212,83 @@ def parse_nem12_rows(nem_list: Iterable, file_name=None) -> NEMReadings:
     trans: Dict[str, Dict[str, list]] = {}
     nmi_d = None  # current NMI details block that readings apply to
 
-    observed_900_record = False
+    observed_900_records = []
 
-    for row in nem_list:
-
-        if not row:
-            log.debug("Skipping empty row.")
-            continue
-
-        record_indicator = int(row[0])
-
-        if record_indicator == 900:
-            # Powercor NEM12 files can concatenate multiple files together
-            # try to keep parsing anyway.
-            if observed_900_record:
-                log.warning("Found multiple end of data (900) rows. ")
-
-            observed_900_record = True
-            pass
-
-        elif record_indicator == 200:
-            try:
-                nmi_details = parse_200_row(row)
-            except ValueError:
-                log.error("Error passing 200 row:")
-                log.error(row)
-                raise
-            nmi_d = nmi_details
-
-            if nmi_d.nmi not in readings:
-                readings[nmi_d.nmi] = {}
-            if nmi_d.nmi_suffix not in readings[nmi_d.nmi]:
-                readings[nmi_d.nmi][nmi_d.nmi_suffix] = []
-            if nmi_d.nmi not in trans:
-                trans[nmi_d.nmi] = {}
-            if nmi_d.nmi_suffix not in trans[nmi_d.nmi]:
-                trans[nmi_d.nmi][nmi_d.nmi_suffix] = []
-
-        elif record_indicator == 300:
-            num_intervals = int(24 * 60 / nmi_d.interval_length)
-            assert len(row) > 1, f"Invalid 300 Row in {file_name}"
-            if len(row) < num_intervals + 2:
-                record_date = row[1]
-                msg = "Skipping 300 record for %s %s %s. "
-                msg += "It does not have the expected %s intervals"
-                log.error(msg, nmi_d.nmi, nmi_d.nmi_suffix, record_date, num_intervals)
+    for (row_num, row) in enumerate(nem_list, start=1):
+        try:
+            if not row:
+                log.debug(f"Skipping empty row at line {row_num}.")
                 continue
-            interval_record = parse_300_row(
-                row, nmi_d.interval_length, nmi_d.uom, nmi_d.meter_serial_number
-            )
-            # don't flatten the list of interval readings at this stage,
-            # as they may need to be adjusted by a 400 row
-            readings[nmi_d.nmi][nmi_d.nmi_suffix].append(
-                interval_record.interval_values
-            )
 
-        elif record_indicator == 400:
-            event_record = parse_400_row(row)
-            readings[nmi_d.nmi][nmi_d.nmi_suffix][-1] = update_reading_events(
-                readings[nmi_d.nmi][nmi_d.nmi_suffix][-1], event_record
-            )
+            record_indicator = int(row[0])
 
-        elif record_indicator == 500:
-            b2b_details = parse_500_row(row)
-            trans[nmi_d.nmi][nmi_d.nmi_suffix].append(b2b_details)
+            if record_indicator == 900:
+                # Powercor NEM12 files can concatenate multiple files together
+                # try to keep parsing anyway.
+                if observed_900_records:
+                    log.warning(f"Found multiple end of data (900) rows on lines {observed_900_records}")
 
-        else:
-            log.warning(
-                "Record indicator %s not supported and was skipped", record_indicator
-            )
+                observed_900_records.append(row_num)
+                pass
+
+            elif record_indicator == 200:
+                try:
+                    nmi_details = parse_200_row(row)
+                except ValueError:
+                    log.error(f"Error passing 200 row at line {row_num}:")
+                    log.error(row)
+                    raise
+                nmi_d = nmi_details
+
+                if nmi_d.nmi not in readings:
+                    readings[nmi_d.nmi] = {}
+                if nmi_d.nmi_suffix not in readings[nmi_d.nmi]:
+                    readings[nmi_d.nmi][nmi_d.nmi_suffix] = []
+                if nmi_d.nmi not in trans:
+                    trans[nmi_d.nmi] = {}
+                if nmi_d.nmi_suffix not in trans[nmi_d.nmi]:
+                    trans[nmi_d.nmi][nmi_d.nmi_suffix] = []
+
+            elif record_indicator == 300:
+                num_intervals = int(24 * 60 / nmi_d.interval_length)
+                assert len(row) > 1, f"Invalid 300 Row in {file_name} on line {row_num}"
+                if len(row) < num_intervals + 2:
+                    record_date = row[1]
+                    msg = "Skipping 300 record for %s %s %s on row %d. "
+                    msg += "It does not have the expected %s intervals"
+                    log.error(msg, nmi_d.nmi, nmi_d.nmi_suffix, record_date, row_num, num_intervals)
+                    continue
+                interval_record = parse_300_row(
+                    row, nmi_d.interval_length, nmi_d.uom, nmi_d.meter_serial_number
+                )
+                # don't flatten the list of interval readings at this stage,
+                # as they may need to be adjusted by a 400 row
+                readings[nmi_d.nmi][nmi_d.nmi_suffix].append(
+                    interval_record.interval_values
+                )
+
+            elif record_indicator == 400:
+                event_record = parse_400_row(row)
+                readings[nmi_d.nmi][nmi_d.nmi_suffix][-1] = update_reading_events(
+                    readings[nmi_d.nmi][nmi_d.nmi_suffix][-1], event_record
+                )
+
+            elif record_indicator == 500:
+                b2b_details = parse_500_row(row)
+                trans[nmi_d.nmi][nmi_d.nmi_suffix].append(b2b_details)
+
+            else:
+                log.warning(
+                    "Record indicator %s on line %d not supported and was skipped", record_indicator, row_num
+                )
+        except (KeyError, ValueError, AssertionError, IndexError, TypeError) as e:
+            raise ValueError(f"Unable to parse line {row_num}") from e
 
     for nmi in readings:
         for suffix in readings[nmi]:
             readings[nmi][suffix] = flatten_list(readings[nmi][suffix])
 
-    if not observed_900_record:
+    if not observed_900_records:
         log.warning("Missing end of data (900) row.")
 
     return NEMReadings(readings=readings, transactions=trans)
