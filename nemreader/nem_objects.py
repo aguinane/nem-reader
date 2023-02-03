@@ -112,21 +112,47 @@ class B2BDetails13(NamedTuple):
     current_trans_code: str
     current_ret_service_order: str
 
+# Structure Dict as a pydantic.BaseModel
+# to avoid time-consuming re-validation of readings
+class Readings(BaseModel):
+    __root__: Dict[str, Dict[str, List[Reading]]]
+
+    # expose standard dictionary methods
+    def __getitem__(self, key):
+        return self.__root__.__getitem__(key)
+
+    def __len__(self):
+        return self.__root__.__len__()
+
+    def __contains__(self, item):
+        return self.__root__.__contains__(item)
+
+    def items(self):
+        return self.__root__.items()
+
+    def keys(self):
+        return self.__root__.keys()
+
 
 class NEMReadings(BaseModel):
     """Represents a meter reading"""
 
-    readings: Dict[str, Dict[str, List[Reading]]]
+    readings: Readings
     transactions: Dict[str, Dict[str, list]]
 
+    class Config:
+        copy_on_model_validation = 'shallow' # faster
 
 class NEMData(BaseModel):
     """Represents a meter reading"""
 
     header: HeaderRecord
-    readings: Dict[str, Dict[str, List[Reading]]]
+    readings: Readings
     transactions: Dict[str, Dict[str, list]]
 
     @property
     def nmis(self) -> List[str]:
         return list(self.transactions.keys())
+
+    class Config:
+        copy_on_model_validation = 'shallow' # faster

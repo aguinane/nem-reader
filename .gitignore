@@ -97,3 +97,7 @@ ENV/
 /*.csv
 !examples/*.csv
 *.db
+
+# Mac metadata
+.DS_Store
+
