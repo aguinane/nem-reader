@@ -24,6 +24,7 @@ from .split_days import make_set_interval, split_multiday_reads
 
 log = logging.getLogger(__name__)
 
+minutes_per_day = 24 * 60
 
 class NEMFile:
     """An NEM file object"""
@@ -254,7 +255,7 @@ def parse_nem12_rows(nem_list: Iterable, file_name=None) -> NEMReadings:
                     trans[nmi_d.nmi][nmi_d.nmi_suffix] = []
 
             elif record_indicator == 300:
-                num_intervals = int(24 * 60 / nmi_d.interval_length)
+                num_intervals = int(minutes_per_day / nmi_d.interval_length)
                 assert len(row) > 1, f"Invalid 300 Row in {file_name} on line {row_num}"
                 if len(row) < num_intervals + 2:
                     record_date = row[1]
@@ -272,7 +273,7 @@ def parse_nem12_rows(nem_list: Iterable, file_name=None) -> NEMReadings:
                 )
 
             elif record_indicator == 400:
-                event_record = parse_400_row(row)
+                event_record = parse_400_row(row, nmi_d.interval_length)
                 readings[nmi_d.nmi][nmi_d.nmi_suffix][-1] = update_reading_events(
                     readings[nmi_d.nmi][nmi_d.nmi_suffix][-1], event_record
                 )
@@ -432,13 +433,17 @@ def parse_300_row(
     """Interval data record (300)
     
     RecordIndicator,IntervalDate,IntervalValue1 . . . IntervalValueN,
-    Example: QualityMethod,ReasonCode,ReasonDescription,UpdateDateTime,MSATSLoadDateTime
-300,20030501,50.1, . . . ,21.5,V,,,20030101153445,20030102023012
+    QualityMethod,ReasonCode,ReasonDescription,UpdateDateTime,MSATSLoadDateTime
+    Example: 300,20030501,50.1, . . . ,21.5,V,,,20030101153445,20030102023012
     """
+    num_non_reading_fields = 7 # count of fields except IntervalValue1 . . . IntervalValueN
 
-    num_intervals = int(24 * 60 / interval)
+    num_intervals = int(minutes_per_day / interval)
+    
     interval_date = parse_datetime(row[1])
     last_interval = 2 + num_intervals
+    if len(row) != num_intervals + num_non_reading_fields:
+        raise ValueError(f"Unexpected number of values in 300 row: {len(row)-num_non_reading_fields} readings for {interval}min intervals")
     quality_method = row[last_interval]
 
     # Optional fields
@@ -509,12 +514,21 @@ def parse_reading(val: str) -> Optional[float]:
         return None  # Not a valid reading
 
 
-def parse_400_row(row: list) -> tuple:
+def parse_400_row(row: list, interval_length: int) -> tuple:
     """Interval event record (400)
     
     RecordIndicator,StartInterval,EndInterval,QualityMethod,ReasonCode,ReasonDescription
     Example: 400,1,28,S14,32
     """
+    num_intervals = int(minutes_per_day / interval_length)
+    start_interval = int(row[1])
+    end_interval = int(row[2])
+    if end_interval < start_interval:
+        raise ValueError(f"End interval {end_interval} is earlier than start interval {start_interval} in 400 row.")
+    if not (0 <= start_interval < num_intervals):
+        raise ValueError(f"Invalid start interval {start_interval} in 400 row. Expecting {num_intervals} intervals.")
+    if not (0 <= end_interval < num_intervals):
+        raise ValueError(f"Invalid end interval {end_interval} in 400 row. Expecting {num_intervals} intervals.")
 
     return EventRecord(int(row[1]), int(row[2]), row[3], row[4], row[5])
 
