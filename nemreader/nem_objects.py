@@ -1,9 +1,6 @@
 from datetime import datetime
 from typing import Dict, List, NamedTuple, Optional
 
-from pydantic import BaseModel
-
-
 class HeaderRecord(NamedTuple):
     """Header record (100)"""
 
@@ -112,43 +109,30 @@ class B2BDetails13(NamedTuple):
     current_trans_code: str
     current_ret_service_order: str
 
-# Structure Dict as a pydantic.BaseModel
-# to avoid time-consuming re-validation of readings
-class Readings(BaseModel):
-    __root__: Dict[str, Dict[str, List[Reading]]]
-
-    # expose standard dictionary methods
-    def __getitem__(self, key):
-        return self.__root__.__getitem__(key)
-
-    def __len__(self):
-        return self.__root__.__len__()
-
-    def __contains__(self, item):
-        return self.__root__.__contains__(item)
-
-    def items(self):
-        return self.__root__.items()
-
-    def keys(self):
-        return self.__root__.keys()
-
-
-class NEMReadings(BaseModel):
+class NEMReadings:
     """Represents a meter reading"""
 
-    readings: Readings
+    readings: Dict[str, Dict[str, List[Reading]]]
     transactions: Dict[str, Dict[str, list]]
+
+    def __init__(self, readings, transactions):
+        self.readings = readings
+        self.transactions = transactions
 
     class Config:
         copy_on_model_validation = 'shallow' # faster
 
-class NEMData(BaseModel):
+class NEMData:
     """Represents a meter reading"""
 
     header: HeaderRecord
-    readings: Readings
+    readings: Dict[str, Dict[str, List[Reading]]]
     transactions: Dict[str, Dict[str, list]]
+
+    def __init__(self, header, readings, transactions):
+        self.header = header
+        self.readings = readings
+        self.transactions = transactions
 
     @property
     def nmis(self) -> List[str]:
