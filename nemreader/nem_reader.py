@@ -198,7 +198,11 @@ def read_nem_file(file_path: str, ignore_missing_header=False) -> NEMData:
 
 
 def parse_100_row(row: List[Any], file_name: str) -> HeaderRecord:
-    """Parse header record (100)"""
+    """Parse header record (100)
+    
+    RecordIndicator,VersionHeader,DateTime,FromParticipant,ToParticipant
+    Example: 100,NEM12,200301011534,MDP1,Retailer1
+    """
     return HeaderRecord(
         row[1], parse_datetime(row[2]), row[3], row[4], file_name, False
     )
@@ -366,7 +370,11 @@ def calculate_manual_reading(basic_data: BasicMeterData) -> Reading:
 
 
 def parse_200_row(row: list) -> NmiDetails:
-    """Parse NMI data details record (200)"""
+    """Parse NMI data details record (200)
+    
+    RecordIndicator,NMI,NMIConfiguration,RegisterID,NMISuffix,MDMDataStreamIdentifier,MeterSerialNumber,UOM,IntervalLength,NextScheduledReadDate
+    Example: 200,VABD000163,E1Q1,1,E1,N1,METSER123,kWh,30,20040120
+    """
 
     next_read = None  # Next scheduled read is an optional field
     if len(row) > 9:
@@ -378,7 +386,15 @@ def parse_200_row(row: list) -> NmiDetails:
 
 
 def parse_250_row(row: list) -> BasicMeterData:
-    """Parse basic meter data record (250)"""
+    """Parse basic meter data record (250)
+    
+    RecordIndicator,NMI,NMIConfiguration,RegisterID,NMISuffix,MDMDataStreamIdentifier,MeterSeri
+alNumber,DirectionIndicator,PreviousRegisterRead,PreviousRegisterReadDateTime,PreviousQuali
+tyMethod,PreviousReasonCode,PreviousReasonDescription,CurrentRegisterRead,CurrentRegister
+ReadDateTime,CurrentQualityMethod,CurrentReasonCode,CurrentReasonDescription,Quantity,U
+OM,NextScheduledReadDate,UpdateDateTime,MSATSLoadDateTime
+    Example: 250,1234567890,1141,01,11,11,METSER66,E,000021.2,20031001103230,A,,,000534.5,20040201100030,E64,77,,343.5,kWh,20040509, 20040202125010,20040203000130
+    """
     return BasicMeterData(
         row[1],
         row[2],
@@ -413,7 +429,12 @@ def nth(iterable, n, default=None):
 def parse_300_row(
     row: list, interval: int, uom: str, meter_serial_number: str
 ) -> IntervalRecord:
-    """Interval data record (300)"""
+    """Interval data record (300)
+    
+    RecordIndicator,IntervalDate,IntervalValue1 . . . IntervalValueN,
+    Example: QualityMethod,ReasonCode,ReasonDescription,UpdateDateTime,MSATSLoadDateTime
+300,20030501,50.1, . . . ,21.5,V,,,20030101153445,20030102023012
+    """
 
     num_intervals = int(24 * 60 / interval)
     interval_date = parse_datetime(row[1])
@@ -489,7 +510,11 @@ def parse_reading(val: str) -> Optional[float]:
 
 
 def parse_400_row(row: list) -> tuple:
-    """Interval event record (400)"""
+    """Interval event record (400)
+    
+    RecordIndicator,StartInterval,EndInterval,QualityMethod,ReasonCode,ReasonDescription
+    Example: 400,1,28,S14,32
+    """
 
     return EventRecord(int(row[1]), int(row[2]), row[3], row[4], row[5])
 
@@ -516,12 +541,20 @@ def update_reading_events(readings, event_record):
 
 
 def parse_500_row(row: list) -> tuple:
-    """Parse B2B details record"""
+    """Parse B2B details record
+    
+    RecordIndicator,TransCode,RetServiceOrder,ReadDateTime,IndexRead
+    Example: 500,S,RETNSRVCEORD1,20031220154500,001123.5
+    """
     return B2BDetails12(row[1], row[2], row[3], row[4])
 
 
 def parse_550_row(row: list) -> tuple:
-    """Parse B2B details record"""
+    """Parse B2B details record
+    
+    RecordIndicator,PreviousTransCode,PreviousRetServiceOrder,CurrentTransCode,CurrentRetServiceOrder
+    Example: 550,N,,A,
+    """
     return B2BDetails13(row[1], row[2], row[3], row[4])
 
 
