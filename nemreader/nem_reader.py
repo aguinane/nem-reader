@@ -519,15 +519,17 @@ def parse_400_row(row: list, interval_length: int) -> tuple:
     
     RecordIndicator,StartInterval,EndInterval,QualityMethod,ReasonCode,ReasonDescription
     Example: 400,1,28,S14,32
+
+    Note that intervals are indexed from 1 not 0.
     """
     num_intervals = int(minutes_per_day / interval_length)
     start_interval = int(row[1])
     end_interval = int(row[2])
     if end_interval < start_interval:
         raise ValueError(f"End interval {end_interval} is earlier than start interval {start_interval} in 400 row.")
-    if not (0 <= start_interval < num_intervals):
+    if not (0 < start_interval <= num_intervals):
         raise ValueError(f"Invalid start interval {start_interval} in 400 row. Expecting {num_intervals} intervals.")
-    if not (0 <= end_interval < num_intervals):
+    if not (0 < end_interval <= num_intervals):
         raise ValueError(f"Invalid end interval {end_interval} in 400 row. Expecting {num_intervals} intervals.")
 
     return EventRecord(int(row[1]), int(row[2]), row[3], row[4], row[5])
