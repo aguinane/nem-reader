@@ -9,12 +9,12 @@ import logging
 from logging import NullHandler
 
 from .nem_reader import NEMFile, read_nem_file
+from .output_db import output_as_sqlite
 from .outputs import (
     nmis_in_file,
     output_as_csv,
     output_as_daily_csv,
     output_as_data_frames,
-    output_as_sqlite,
 )
 from .version import __version__
 

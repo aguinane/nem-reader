@@ -1,16 +1,14 @@
 import csv
 import logging
 import os
-import warnings
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional, Tuple
 
 import pandas as pd
-from sqlite_utils import Database
 
 from .nem_objects import Reading
 from .nem_reader import NEMFile
-from .split_days import make_set_interval, split_multiday_reads
+from .split_days import split_multiday_reads
 
 log = logging.getLogger(__name__)
 
@@ -21,54 +19,6 @@ def nmis_in_file(file_name) -> Generator[Tuple[str, List[str]], None, None]:
     nf.nem_data()
     for nmi, suffixes in nf.nmi_channels.items():
         yield nmi, suffixes
-
-
-def get_data_frame(
-    channels: List[str],
-    nmi_readings: Dict[str, List[Reading]],
-    split_days: bool = False,
-    set_interval: Optional[int] = None,
-) -> pd.DataFrame:
-    """Get a Pandas DataFrame for NMI"""
-
-    warnings.warn("nemreader.get_data_frame is deprecated`.", DeprecationWarning)
-
-    if split_days or set_interval:
-        # Split any readings that are >24 hours
-        for ch in channels:
-            nmi_readings[ch] = list(split_multiday_reads(nmi_readings[ch]))
-
-    if set_interval:
-        for ch in channels:
-            nmi_readings[ch] = list(make_set_interval(nmi_readings[ch], set_interval))
-
-    # Work out which channel has smallest intervals and use that as first index
-    ch_rows = []
-    for i, ch in enumerate(channels):
-        num_rows = len(nmi_readings[ch])
-        ch_rows.append((num_rows, ch))
-    ch_rows.sort()
-    first_ch = ch_rows[-1][1]
-
-    d = {
-        "t_start": [x.t_start for x in nmi_readings[first_ch]],
-        "t_end": [x.t_end for x in nmi_readings[first_ch]],
-        "quality_method": [x.quality_method for x in nmi_readings[first_ch]],
-        "event_code": [x.event_code for x in nmi_readings[first_ch]],
-        "event_desc": [x.event_desc for x in nmi_readings[first_ch]],
-    }
-    d[first_ch] = [x.read_value for x in nmi_readings[first_ch]]
-
-    df = pd.DataFrame(data=d, index=d["t_start"])
-
-    for ch in channels:
-        if ch == first_ch:
-            continue  # This channel already added
-        index = [x.t_start for x in nmi_readings[ch]]
-        values = [x.read_value for x in nmi_readings[ch]]
-        ser = pd.Series(data=values, index=index, name=ch)
-        df.loc[:, ch] = ser
-    return df
 
 
 def output_as_data_frames(
@@ -216,64 +166,4 @@ def output_as_daily_csv(file_name, output_dir="."):
 
     save_to_csv(headings, all_rows, output_path)
 
-    return output_path
-
-
-def output_as_sqlite(
-    file_name: Path,
-    output_dir=".",
-    split_days: bool = False,
-    set_interval: Optional[int] = None,
-):
-    """Export all channels to sqlite file"""
-
-    output_dir = Path(output_dir)
-    os.makedirs(output_dir, exist_ok=True)
-    output_path = output_dir / "nemdata.db"
-    db = Database(output_path)
-
-    nf = NEMFile(file_name, strict=False)
-    m = nf.nem_data()
-    nmis = m.readings.keys()
-    for nmi in nmis:
-        channels = list(m.transactions[nmi].keys())
-        nmi_readings = m.readings[nmi]
-
-        for ch in channels:
-            if split_days or set_interval:
-                nmi_readings[ch] = list(split_multiday_reads(nmi_readings[ch]))
-
-            if set_interval:
-                nmi_readings[ch] = list(
-                    make_set_interval(nmi_readings[ch], set_interval)
-                )
-
-            items = []
-            for x in nmi_readings[ch]:
-                item = {
-                    "nmi": nmi,
-                    "channel": ch,
-                    "t_start": x.t_start,
-                    "t_end": x.t_end,
-                    "value": x.read_value,
-                    "quality_method": x.quality_method,
-                    "event_code": x.event_code,
-                    "event_desc": x.event_desc,
-                }
-                items.append(item)
-            db["readings"].upsert_all(
-                items,
-                pk=("nmi", "channel", "t_start"),
-                column_order=("nmi", "channel", "t_start"),
-            )
-
-    db.create_view(
-        "nmi_summary",
-        """
-        SELECT nmi, channel, MIN(t_start) as first_interval, MAX(t_end) as last_interval
-        FROM readings
-        GROUP BY nmi, channel
-    """,
-        replace=True,
-    )
     return output_path

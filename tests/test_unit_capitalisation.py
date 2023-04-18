@@ -15,7 +15,7 @@ def test_unit_capitalisation():
     df_30min = nf.get_pivot_data_frame(split_days=True, set_interval=30)
     df_60min = nf.get_pivot_data_frame(split_days=True, set_interval=60)
 
-    for (nmi, nmi_readings) in meter_data.readings.items():
+    for nmi, nmi_readings in meter_data.readings.items():
         for key in nmi_readings.keys():
             assert nmi_readings[key][0].t_end - nmi_readings[key][
                 0

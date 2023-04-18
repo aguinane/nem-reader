@@ -5,7 +5,8 @@ from typing import Optional
 
 import typer
 
-from .outputs import nmis_in_file, output_as_csv, output_as_daily_csv, output_as_sqlite
+from .output_db import output_as_sqlite
+from .outputs import nmis_in_file, output_as_csv, output_as_daily_csv
 from .version import __version__
 
 LOG_FORMAT = "%(asctime)s %(levelname)-8s %(message)s"
@@ -24,7 +25,7 @@ def callback(
     version: Optional[bool] = typer.Option(
         None, "--version", callback=version_callback
     ),
-):
+) -> None:
     """nemreader
 
     Parse AEMO NEM12 and NEM13 meter data files
@@ -33,7 +34,9 @@ def callback(
 
 
 @app.command()
-def list_nmis(nemfile: Path, verbose: bool = typer.Option(False, "--verbose", "-v")):
+def list_nmis(
+    nemfile: Path, verbose: bool = typer.Option(False, "--verbose", "-v")
+) -> None:
     if verbose:
         log_level = "DEBUG"
     else:
@@ -59,7 +62,7 @@ def output_csv(
         dir_okay=True,
         writable=True,
     ),
-):
+) -> None:
     """Output NEM file to transposed CSV.
 
     nemfile is the name of the file to parse.
@@ -84,7 +87,7 @@ def output_csv_daily(
         dir_okay=True,
         writable=True,
     ),
-):
+) -> None:
     """Output NEM file to transposed CSV.
 
     nemfile is the name of the file to parse.
@@ -108,9 +111,10 @@ def output_sqlite(
         dir_okay=True,
         writable=True,
     ),
+    output_file: str = "nemdata.db",
+    set_interval: Optional[int] = None,
     verbose: bool = typer.Option(False, "--verbose", "-v"),
-    five_min: bool = typer.Option(False, "--five-min", "-5"),
-):
+) -> None:
     """Output NEM file to transposed CSV.
 
     nemfile is the name of the file to parse.
@@ -129,7 +133,12 @@ def output_sqlite(
     for fp in files:
         typer.echo(f"Processing {fp}")
         try:
-            output_as_sqlite(fp, output_dir=outdir, make_fivemins=five_min)
+            output_as_sqlite(
+                fp,
+                output_dir=outdir,
+                output_file=output_file,
+                set_interval=set_interval,
+            )
         except Exception:
             typer.echo(f"Not a valid nem file: {fp}")
     typer.echo("Finished exporting to DB.")

@@ -10,7 +10,7 @@ license = { file = "LICENSE" }
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",    
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.8",
@@ -39,9 +39,9 @@ profile = "black"
 addopts = "-ra --failed-first --showlocals --durations=3 --cov=nemreader"
 
 [tool.coverage.run]
-omit = ["*/version.py"]
+omit = ["*/version.py", '*/__main__.py']
 
 [tool.coverage.report]
 show_missing = true
 skip_empty = true
-fail_under = 85
+fail_under = 90

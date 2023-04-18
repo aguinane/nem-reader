@@ -4,7 +4,6 @@ from pathlib import Path
 
 import mkdocs_gen_files
 
-
 for path in sorted(Path("nemreader").rglob("*.py")):  #
     module_path = path.relative_to("").with_suffix("")  #
     doc_path = path.relative_to("").with_suffix(".md")  #
@@ -12,9 +11,9 @@ for path in sorted(Path("nemreader").rglob("*.py")):  #
 
     parts = list(module_path.parts)
 
-    if parts[-1] in ("__init__", "__main__", 'version'):
+    if parts[-1] in ("__init__", "__main__", "version"):
         continue
-    
+
     with mkdocs_gen_files.open(full_doc_path, "w") as fd:  #
         identifier = ".".join(parts)  #
         print("::: " + identifier, file=fd)  #

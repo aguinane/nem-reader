@@ -4,7 +4,6 @@ from nemreader import NEMFile
 
 
 def test_correct_NMIs():
-
     nf = NEMFile("examples/invalid/Example_NEM12_powercor.csv", strict=False)
     meter_data = nf.nem_data()
     assert len(meter_data.readings) == 1

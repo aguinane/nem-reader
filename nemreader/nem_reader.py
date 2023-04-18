@@ -26,11 +26,11 @@ log = logging.getLogger(__name__)
 
 minutes_per_day = 24 * 60
 
+
 class NEMFile:
     """An NEM file object"""
 
     def __init__(self, file_path: str, strict: bool = False) -> None:
-
         self.file_path = file_path
         self.strict = strict
         self.nmis: set = set()
@@ -200,7 +200,7 @@ def read_nem_file(file_path: str, ignore_missing_header=False) -> NEMData:
 
 def parse_100_row(row: List[Any], file_name: str) -> HeaderRecord:
     """Parse header record (100)
-    
+
     RecordIndicator,VersionHeader,DateTime,FromParticipant,ToParticipant
     Example: 100,NEM12,200301011534,MDP1,Retailer1
     """
@@ -219,7 +219,7 @@ def parse_nem12_rows(nem_list: Iterable, file_name=None) -> NEMReadings:
 
     observed_900_records = []
 
-    for (row_num, row) in enumerate(nem_list, start=1):
+    for row_num, row in enumerate(nem_list, start=1):
         try:
             if not row:
                 log.debug(f"Skipping empty row at line {row_num}.")
@@ -231,7 +231,9 @@ def parse_nem12_rows(nem_list: Iterable, file_name=None) -> NEMReadings:
                 # Powercor NEM12 files can concatenate multiple files together
                 # try to keep parsing anyway.
                 if observed_900_records:
-                    log.warning(f"Found multiple end of data (900) rows on lines {observed_900_records}")
+                    log.warning(
+                        f"Found multiple end of data (900) rows on lines {observed_900_records}"
+                    )
 
                 observed_900_records.append(row_num)
                 pass
@@ -261,7 +263,14 @@ def parse_nem12_rows(nem_list: Iterable, file_name=None) -> NEMReadings:
                     record_date = row[1]
                     msg = "Skipping 300 record for %s %s %s on row %d. "
                     msg += "It does not have the expected %s intervals"
-                    log.error(msg, nmi_d.nmi, nmi_d.nmi_suffix, record_date, row_num, num_intervals)
+                    log.error(
+                        msg,
+                        nmi_d.nmi,
+                        nmi_d.nmi_suffix,
+                        record_date,
+                        row_num,
+                        num_intervals,
+                    )
                     continue
                 interval_record = parse_300_row(
                     row, nmi_d.interval_length, nmi_d.uom, nmi_d.meter_serial_number
@@ -284,7 +293,9 @@ def parse_nem12_rows(nem_list: Iterable, file_name=None) -> NEMReadings:
 
             else:
                 log.warning(
-                    "Record indicator %s on line %d not supported and was skipped", record_indicator, row_num
+                    "Record indicator %s on line %d not supported and was skipped",
+                    record_indicator,
+                    row_num,
                 )
         except (KeyError, ValueError, AssertionError, IndexError, TypeError) as e:
             raise ValueError(f"Unable to parse line {row_num}") from e
@@ -372,7 +383,7 @@ def calculate_manual_reading(basic_data: BasicMeterData) -> Reading:
 
 def parse_200_row(row: list) -> NmiDetails:
     """Parse NMI data details record (200)
-    
+
     RecordIndicator,NMI,NMIConfiguration,RegisterID,NMISuffix,MDMDataStreamIdentifier,MeterSerialNumber,UOM,IntervalLength,NextScheduledReadDate
     Example: 200,VABD000163,E1Q1,1,E1,N1,METSER123,kWh,30,20040120
     """
@@ -388,13 +399,13 @@ def parse_200_row(row: list) -> NmiDetails:
 
 def parse_250_row(row: list) -> BasicMeterData:
     """Parse basic meter data record (250)
-    
-    RecordIndicator,NMI,NMIConfiguration,RegisterID,NMISuffix,MDMDataStreamIdentifier,MeterSeri
-alNumber,DirectionIndicator,PreviousRegisterRead,PreviousRegisterReadDateTime,PreviousQuali
-tyMethod,PreviousReasonCode,PreviousReasonDescription,CurrentRegisterRead,CurrentRegister
-ReadDateTime,CurrentQualityMethod,CurrentReasonCode,CurrentReasonDescription,Quantity,U
-OM,NextScheduledReadDate,UpdateDateTime,MSATSLoadDateTime
-    Example: 250,1234567890,1141,01,11,11,METSER66,E,000021.2,20031001103230,A,,,000534.5,20040201100030,E64,77,,343.5,kWh,20040509, 20040202125010,20040203000130
+
+        RecordIndicator,NMI,NMIConfiguration,RegisterID,NMISuffix,MDMDataStreamIdentifier,MeterSeri
+    alNumber,DirectionIndicator,PreviousRegisterRead,PreviousRegisterReadDateTime,PreviousQuali
+    tyMethod,PreviousReasonCode,PreviousReasonDescription,CurrentRegisterRead,CurrentRegister
+    ReadDateTime,CurrentQualityMethod,CurrentReasonCode,CurrentReasonDescription,Quantity,U
+    OM,NextScheduledReadDate,UpdateDateTime,MSATSLoadDateTime
+        Example: 250,1234567890,1141,01,11,11,METSER66,E,000021.2,20031001103230,A,,,000534.5,20040201100030,E64,77,,343.5,kWh,20040509, 20040202125010,20040203000130
     """
     return BasicMeterData(
         row[1],
@@ -431,19 +442,23 @@ def parse_300_row(
     row: list, interval: int, uom: str, meter_serial_number: str
 ) -> IntervalRecord:
     """Interval data record (300)
-    
+
     RecordIndicator,IntervalDate,IntervalValue1 . . . IntervalValueN,
     QualityMethod,ReasonCode,ReasonDescription,UpdateDateTime,MSATSLoadDateTime
     Example: 300,20030501,50.1, . . . ,21.5,V,,,20030101153445,20030102023012
     """
-    num_non_reading_fields = 7 # count of fields except IntervalValue1 . . . IntervalValueN
+    num_non_reading_fields = (
+        7  # count of fields except IntervalValue1 . . . IntervalValueN
+    )
 
     num_intervals = int(minutes_per_day / interval)
-    
+
     interval_date = parse_datetime(row[1])
     last_interval = 2 + num_intervals
     if len(row) != num_intervals + num_non_reading_fields:
-        raise ValueError(f"Unexpected number of values in 300 row: {len(row)-num_non_reading_fields} readings for {interval}min intervals")
+        raise ValueError(
+            f"Unexpected number of values in 300 row: {len(row)-num_non_reading_fields} readings for {interval}min intervals"
+        )
     quality_method = row[last_interval]
 
     # Optional fields
@@ -516,7 +531,7 @@ def parse_reading(val: str) -> Optional[float]:
 
 def parse_400_row(row: list, interval_length: int) -> tuple:
     """Interval event record (400)
-    
+
     RecordIndicator,StartInterval,EndInterval,QualityMethod,ReasonCode,ReasonDescription
     Example: 400,1,28,S14,32
 
@@ -526,11 +541,17 @@ def parse_400_row(row: list, interval_length: int) -> tuple:
     start_interval = int(row[1])
     end_interval = int(row[2])
     if end_interval < start_interval:
-        raise ValueError(f"End interval {end_interval} is earlier than start interval {start_interval} in 400 row.")
+        raise ValueError(
+            f"End interval {end_interval} is earlier than start interval {start_interval} in 400 row."
+        )
     if not (0 < start_interval <= num_intervals):
-        raise ValueError(f"Invalid start interval {start_interval} in 400 row. Expecting {num_intervals} intervals.")
+        raise ValueError(
+            f"Invalid start interval {start_interval} in 400 row. Expecting {num_intervals} intervals."
+        )
     if not (0 < end_interval <= num_intervals):
-        raise ValueError(f"Invalid end interval {end_interval} in 400 row. Expecting {num_intervals} intervals.")
+        raise ValueError(
+            f"Invalid end interval {end_interval} in 400 row. Expecting {num_intervals} intervals."
+        )
 
     return EventRecord(int(row[1]), int(row[2]), row[3], row[4], row[5])
 
@@ -558,7 +579,7 @@ def update_reading_events(readings, event_record):
 
 def parse_500_row(row: list) -> tuple:
     """Parse B2B details record
-    
+
     RecordIndicator,TransCode,RetServiceOrder,ReadDateTime,IndexRead
     Example: 500,S,RETNSRVCEORD1,20031220154500,001123.5
     """
@@ -567,7 +588,7 @@ def parse_500_row(row: list) -> tuple:
 
 def parse_550_row(row: list) -> tuple:
     """Parse B2B details record
-    
+
     RecordIndicator,PreviousTransCode,PreviousRetServiceOrder,CurrentTransCode,CurrentRetServiceOrder
     Example: 550,N,,A,
     """

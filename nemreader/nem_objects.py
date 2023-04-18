@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Dict, List, NamedTuple, Optional
 
+
 class HeaderRecord(NamedTuple):
     """Header record (100)"""
 
@@ -109,6 +110,7 @@ class B2BDetails13(NamedTuple):
     current_trans_code: str
     current_ret_service_order: str
 
+
 class NEMReadings:
     """Represents a meter reading"""
 
@@ -120,7 +122,8 @@ class NEMReadings:
         self.transactions = transactions
 
     class Config:
-        copy_on_model_validation = 'shallow' # faster
+        copy_on_model_validation = "shallow"  # faster
+
 
 class NEMData:
     """Represents a meter reading"""
@@ -139,4 +142,4 @@ class NEMData:
         return list(self.transactions.keys())
 
     class Config:
-        copy_on_model_validation = 'shallow' # faster
+        copy_on_model_validation = "shallow"  # faster

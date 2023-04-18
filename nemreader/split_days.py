@@ -123,7 +123,6 @@ def make_set_interval(
 
     # Output any aggregated grouped values
     for group_end in sorted(group_records.keys()):
-
         start = group_end - delta
         grp_readings = group_records[group_end]
         uom = grp_readings[0].uom
