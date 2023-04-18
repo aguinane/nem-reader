@@ -5,7 +5,7 @@ from typing import Optional
 
 import typer
 
-from .output_db import output_as_sqlite
+from .output_db import extend_sqlite, output_as_sqlite
 from .outputs import nmis_in_file, output_as_csv, output_as_daily_csv
 from .version import __version__
 
@@ -115,9 +115,9 @@ def output_sqlite(
     set_interval: Optional[int] = None,
     verbose: bool = typer.Option(False, "--verbose", "-v"),
 ) -> None:
-    """Output NEM file to transposed CSV.
+    """Output NEM file to SQLite DB.
 
-    nemfile is the name of the file to parse.
+    nemfile is the name of the file or folder to parse.
     """
     if verbose:
         log_level = "DEBUG"
@@ -141,4 +141,6 @@ def output_sqlite(
             )
         except Exception:
             typer.echo(f"Not a valid nem file: {fp}")
+    db_path = outdir / output_file
+    extend_sqlite(db_path)
     typer.echo("Finished exporting to DB.")
