@@ -3,7 +3,7 @@ import os
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import List, NamedTuple, Optional
+from typing import List, NamedTuple, Optional, Tuple
 
 from dateutil.parser import isoparse
 from sqlite_utils import Database
@@ -109,6 +109,18 @@ def get_nmi_channels(db_path: Path, nmi: str) -> List[str]:
     return channels
 
 
+def get_nmi_date_range(db_path: Path, nmi: str) -> Tuple[datetime, datetime]:
+    db = Database(db_path)
+    sql = """select MIN(first_interval) start, MAX(last_interval) end 
+            from nmi_summary where nmi = :nmi
+            """
+    rows = list(db.query(sql, {"nmi": nmi}))
+    row = rows[0]
+    start = isoparse(row["start"])
+    end = isoparse(row["end"])
+    return start, end
+
+
 class EnergyReading(NamedTuple):
     start: datetime
     value: float
@@ -136,7 +148,7 @@ def calc_nmi_daily_summary(db_path: Path, nmi: str):
     for ch in channels:
         if ch[0] not in ["B", "E"]:
             continue  # Skip other channels
-        feed_in = True if ch[0] == ["B"] else False
+        feed_in = True if ch[0] == "B" else False
         for read in get_nmi_readings(db_path, nmi, ch):
             day = read.start.strftime("%Y-%m-%d")
             if feed_in:
