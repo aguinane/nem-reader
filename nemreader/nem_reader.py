@@ -156,15 +156,48 @@ class NEMFile:
     ) -> pd.DataFrame:
         """Return NEMData as a DataFrame with suffix columns"""
         df = self.get_data_frame(split_days, set_interval)
-        pivot_index = ["nmi", "t_start", "t_end", "quality", "evt_code", "evt_desc"]
+        index_cols = [
+            "nmi",
+            "suffix",
+            "t_start",
+            "t_end",
+        ]
         if include_serno:
-            pivot_index.append("serno")
-        df_pivoted = df.pivot(
-            index=pivot_index,
-            columns="suffix",
-            values="value",
-        ).reset_index()
-        return df_pivoted
+            index_cols.append("serno")
+        else:
+            del df["serno"]
+
+        df.set_index(index_cols, inplace=True)
+        df = df.unstack("suffix")
+        df = df.reset_index()
+        df.columns = df.columns.map("_".join).str.strip("_")
+        quality = 0
+        evt_code = 0
+        evt_desc = 0
+        new_names = {}
+        for col in df.columns:
+            if "value_" in col:
+                new_names[col] = col[6:]
+            if "quality" in col:
+                if not quality:
+                    new_names[col] = "quality"
+                else:
+                    del df[col]
+                quality += 1
+            if "evt_code" in col:
+                if not evt_code:
+                    new_names[col] = "evt_code"
+                else:
+                    del df[col]
+                evt_code += 1
+            if "evt_desc" in col:
+                if not evt_desc:
+                    new_names[col] = "evt_desc"
+                else:
+                    del df[col]
+                evt_desc += 1
+        df.rename(columns=new_names, inplace=True)
+        return df
 
     def get_per_nmi_dfs(
         self,

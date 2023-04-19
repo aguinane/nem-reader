@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from nemreader import (
     nmis_in_file,
     output_as_csv,
@@ -6,7 +8,7 @@ from nemreader import (
 )
 
 
-def test_nmi_output(tmpdir):
+def test_nmi_output():
     """Check NMIs in file"""
     file_name = "examples/unzipped/Example_NEM12_multiple_meters.csv"
     items = list(nmis_in_file(file_name))
@@ -20,17 +22,17 @@ def test_nmi_output(tmpdir):
     assert "B1" in suffixes[1]
 
 
-def test_csv_output(tmpdir):
+def test_csv_output(tmp_path: Path):
     """Create a temporary csv output"""
     file_name = "examples/unzipped/Example_NEM12_actual_interval.csv"
-    output_files = output_as_csv(file_name, output_dir=tmpdir)
+    output_files = output_as_csv(file_name, output_dir=tmp_path)
     assert len(output_files) == 1
 
 
-def test_daily_csv_output(tmpdir):
+def test_daily_csv_output(tmp_path: Path):
     """Create a temporary csv output"""
     file_name = "examples/unzipped/Example_NEM12_actual_interval.csv"
-    output_file = output_as_daily_csv(file_name, output_dir=tmpdir)
+    output_file = output_as_daily_csv(file_name, output_dir=tmp_path)
     assert "Example_NEM12_actual_interval_daily_totals.csv" in str(output_file)
 
 
