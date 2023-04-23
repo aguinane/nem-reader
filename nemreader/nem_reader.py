@@ -33,8 +33,8 @@ class NEMFile:
     def __init__(self, file_path: str, strict: bool = False) -> None:
         self.file_path = file_path
         self.strict = strict
-        self.nmis: set = set()
-        self.nmi_channels: dict = {}
+        self._nmis: set = set()
+        self._nmi_channels: dict = {}
 
     def __repr__(self):
         return f"<NEMFile {self.file_path}>"
@@ -46,6 +46,22 @@ class NEMFile:
         if file_extension.lower() == ".zip":
             return True
         return False
+
+    @property
+    def nmis(self) -> set:
+        """NMIs in file"""
+        if self._nmis:
+            return self._nmis
+        self.nem_data()  # Need to process file first
+        return self._nmis
+
+    @property
+    def nmi_channels(self) -> dict:
+        """NMI channels in file"""
+        if self._nmi_channels:
+            return self._nmi_channels
+        self.nem_data()  # Need to process file first
+        return self._nmi_channels
 
     def parse_nem_file(self, nem_file, file_name="") -> NEMReadings:
         """Parse NEM file and return meter readings named tuple"""
@@ -97,9 +113,9 @@ class NEMFile:
                     nmi_file = csv_text.read().decode("utf-8").splitlines()
                 reads = self.parse_nem_file(nmi_file, file_name=csv_file)
                 for nmi in reads.transactions.keys():
-                    self.nmis.add(nmi)
+                    self._nmis.add(nmi)
                     suffixes = list(reads.transactions[nmi].keys())
-                    self.nmi_channels[nmi] = suffixes
+                    self._nmi_channels[nmi] = suffixes
                 return NEMData(
                     header=self.header,
                     readings=reads.readings,
@@ -109,9 +125,9 @@ class NEMFile:
         with open(self.file_path) as nmi_file:
             reads = self.parse_nem_file(nmi_file)
         for nmi in reads.transactions.keys():
-            self.nmis.add(nmi)
+            self._nmis.add(nmi)
             suffixes = list(reads.transactions[nmi].keys())
-            self.nmi_channels[nmi] = suffixes
+            self._nmi_channels[nmi] = suffixes
         return NEMData(
             header=self.header,
             readings=reads.readings,
@@ -120,7 +136,7 @@ class NEMFile:
 
     def get_data_frame(
         self, split_days: bool = False, set_interval: Optional[int] = None
-    ) -> pd.DataFrame:
+    ) -> Optional[pd.DataFrame]:
         """Return NEMData as a DataFrame"""
         nd = self.nem_data()
         frames = []
@@ -138,14 +154,16 @@ class NEMFile:
                     "nmi": [nmi for _ in range(len(reads))],
                     "suffix": [suffix for _ in range(len(reads))],
                     "serno": [x.meter_serial_number for x in reads],
-                    "t_start": pd.to_datetime((x.t_start for x in reads)),
-                    "t_end": pd.to_datetime((x.t_end for x in reads)),
+                    "t_start": pd.to_datetime([x.t_start for x in reads]),
+                    "t_end": pd.to_datetime([x.t_end for x in reads]),
                     "value": [x.read_value for x in reads],
                     "quality": [x.quality_method for x in reads],
                     "evt_code": [x.event_code for x in reads],
                     "evt_desc": [x.event_desc for x in reads],
                 }
                 frames.append(pd.DataFrame(data))
+        if not frames:
+            return None
         return pd.concat(frames)
 
     def get_pivot_data_frame(
@@ -153,9 +171,11 @@ class NEMFile:
         split_days: bool = False,
         set_interval: Optional[int] = None,
         include_serno: bool = False,
-    ) -> pd.DataFrame:
+    ) -> Optional[pd.DataFrame]:
         """Return NEMData as a DataFrame with suffix columns"""
         df = self.get_data_frame(split_days, set_interval)
+        if df is None:
+            return df
         index_cols = [
             "nmi",
             "suffix",
