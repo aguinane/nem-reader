@@ -54,7 +54,7 @@ def test_missing_fields():
 def test_no_records():
     nf = NEMFile("examples/invalid/Example_NEM12_empty.csv", strict=False)
     meter_data = nf.nem_data()
-    assert len(meter_data.nmis) is 0
+    assert len(meter_data.nmis) == 0
 
 
 def test_empty_file():
