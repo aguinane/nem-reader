@@ -1,0 +1,20 @@
+name: Publish Python Package
+
+on:
+  release:
+    types: [created]
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v3
+            -   name: Set up Python 3.11
+                uses: actions/setup-python@v4
+                with:
+                    python-version: 3.11
+                    cache: pip
+            -   name: To PyPI using Flit
+                uses: AsifArmanRahman/to-pypi-using-flit@v1
+                with:
+                    password: ${{ secrets.PYPI_API_TOKEN }}
