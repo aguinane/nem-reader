@@ -79,6 +79,45 @@ def output_as_sqlite(
     return output_path
 
 
+def output_folder_as_sqlite(
+    file_dir: Path,
+    output_dir: str = ".",
+    output_file: str = "nemdata.db",
+    split_days: bool = False,
+    set_interval: Optional[int] = None,
+    replace: bool = False,
+    skip_errors: bool = False,
+) -> Path:
+    """Export all channels to sqlite file"""
+
+    if isinstance(file_dir, str):
+        file_dir = Path(file_dir)
+
+    output_dir = Path(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = output_dir / output_file
+    if replace and output_path.exists():
+        os.remove(output_path)  # Clear existing database file
+
+    nem_files = [x for x in file_dir.glob("*.csv")]
+    nem_files += [x for x in file_dir.glob("*.zip")]
+    for file_name in nem_files:
+        try:
+            output_as_sqlite(
+                file_name=file_name,
+                output_dir=output_dir,
+                output_file=output_file,
+                split_days=split_days,
+                set_interval=set_interval,
+                replace=False,
+            )
+        except Exception:
+            log.error("Unable to process %s", file_name)
+            if not skip_errors:
+                raise
+    return output_path
+
+
 def time_of_day(start: datetime) -> str:
     """Get time of day period"""
     s = start
@@ -111,7 +150,7 @@ def get_nmi_channels(db_path: Path, nmi: str) -> List[str]:
 
 def get_nmi_date_range(db_path: Path, nmi: str) -> Tuple[datetime, datetime]:
     db = Database(db_path)
-    sql = """select MIN(first_interval) start, MAX(last_interval) end 
+    sql = """select MIN(first_interval) start, MAX(last_interval) end
             from nmi_summary where nmi = :nmi
             """
     rows = list(db.query(sql, {"nmi": nmi}))
@@ -201,4 +240,60 @@ def extend_sqlite(db_path: Path) -> None:
     """,
         replace=True,
     )
-    logging.info("Created monthly view")
+    log.info("Created monthly view")
+
+    db.create_view(
+        "latest_year",
+        """
+    SELECT dr.nmi,
+    MIN(dr.day) as first_day,
+    MAX(dr.day) as last_day,
+    count(dr.day) as num_days,
+    sum(dr.imp) as imp,
+    sum(dr.exp) as exp,
+    sum(dr.imp_morning) as imp_morning,
+    sum(dr.imp_day) as imp_day,
+    sum(dr.imp_evening) as imp_evening,
+    sum(dr.imp_night) as imp_night
+    FROM daily_reads dr
+    LEFT JOIN (SELECT NMI, MAX(last_interval) as last_interval FROM nmi_summary
+       GROUP BY NMI) li ON li.nmi = dr.nmi
+    WHERE dr.day >= DATETIME(li.last_interval, '-366 days')
+    GROUP BY dr.nmi
+    """,
+        replace=True,
+    )
+    log.info("Created latest year view")
+
+    db.create_view(
+        "latest_year_seasons",
+        """
+    SELECT dr.nmi,
+    (CASE WHEN CAST(strftime('%m', dr.day) AS INTEGER) < 3 THEN 'SUMMER'
+        ELSE (CASE WHEN CAST(strftime('%m', dr.day) AS INTEGER) < 6 THEN 'AUTUMN'
+        ELSE (CASE WHEN CAST(strftime('%m', dr.day) AS INTEGER) < 9 THEN 'WINTER'
+        ELSE (CASE WHEN CAST(strftime('%m', dr.day) AS INTEGER) < 12 THEN 'SPRING'
+        ELSE 'SUMMER' END) END) END) END) Season,
+    MIN(dr.day) as first_day,
+    MAX(dr.day) as last_day,
+    count(dr.day) as num_days,
+    sum(dr.imp) as imp,
+    sum(dr.exp) as exp,
+    sum(dr.imp_morning) as imp_morning,
+    sum(dr.imp_day) as imp_day,
+    sum(dr.imp_evening) as imp_evening,
+    sum(dr.imp_night) as imp_night
+    FROM daily_reads dr
+    LEFT JOIN (SELECT NMI, MAX(last_interval) as last_interval FROM nmi_summary
+      GROUP BY NMI) li ON li.nmi = dr.nmi
+    WHERE dr.day >= DATETIME(li.last_interval, '-366 days')
+    GROUP BY dr.nmi,
+        (CASE WHEN CAST(strftime('%m', dr.day) AS INTEGER) < 3 THEN 'SUMMER'
+        ELSE (CASE WHEN CAST(strftime('%m', dr.day) AS INTEGER) < 6 THEN 'AUTUMN'
+        ELSE (CASE WHEN CAST(strftime('%m', dr.day) AS INTEGER) < 9 THEN 'WINTER'
+        ELSE (CASE WHEN CAST(strftime('%m', dr.day) AS INTEGER) < 12 THEN 'SPRING'
+        ELSE 'SUMMER' END) END) END) END)
+    """,
+        replace=True,
+    )
+    log.info("Created latest year season view")
