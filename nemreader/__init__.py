@@ -9,7 +9,7 @@ import logging
 from logging import NullHandler
 
 from .nem_reader import NEMFile, read_nem_file
-from .output_db import output_as_sqlite, output_folder_as_sqlite, extend_sqlite
+from .output_db import extend_sqlite, output_as_sqlite, output_folder_as_sqlite
 from .outputs import (
     nmis_in_file,
     output_as_csv,

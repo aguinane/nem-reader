@@ -228,6 +228,18 @@ def extend_sqlite(db_path: Path) -> None:
     logging.info("Updated day data")
 
     db.create_view(
+        "combined_readings",
+        """
+    SELECT nmi, t_start, t_end, SUM(CASE WHEN substr(channel,1,1) = 'B' THEN -1 * value ELSE value END) as value
+    FROM readings
+    GROUP BY nmi, t_start, t_end
+    ORDER BY 1, 2
+    """,
+        replace=True,
+    )
+    log.info("Created combined readings view")
+
+    db.create_view(
         "monthly_reads",
         """
     SELECT nmi, substr(day,1,7) as month,
