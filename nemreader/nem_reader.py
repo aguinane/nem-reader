@@ -500,17 +500,20 @@ def parse_300_row(
     QualityMethod,ReasonCode,ReasonDescription,UpdateDateTime,MSATSLoadDateTime
     Example: 300,20030501,50.1, . . . ,21.5,V,,,20030101153445,20030102023012
     """
-    num_non_reading_fields = (
-        7  # count of fields except IntervalValue1 . . . IntervalValueN
-    )
+
+    # count of fields except IntervalValue1 . . . IntervalValueN
+    # excluding MSATSLoadDateTime which is only required if present
+    num_required_non_reading_fields = 6
 
     num_intervals = int(minutes_per_day / interval)
 
     interval_date = parse_datetime(row[1])
     last_interval = 2 + num_intervals
-    if len(row) != num_intervals + num_non_reading_fields:
+    if len(row) < num_intervals + num_required_non_reading_fields:
+        num_rows = len(row) - num_required_non_reading_fields
         raise ValueError(
-            f"Unexpected number of values in 300 row: {len(row)-num_non_reading_fields} readings for {interval}min intervals"
+            f"Unexpected number of values in 300 row: " +
+            f"{num_rows} readings for {interval}min intervals"
         )
     quality_method = row[last_interval]
 
