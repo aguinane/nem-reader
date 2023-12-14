@@ -109,7 +109,7 @@ nmi, df = dfs[0] # Return data for first NMI in file
 df.set_index("t_start", inplace=True)
 
 # Chart time of day profile
-hourly = df.groupby([(df.index.hour)]).sum()
+hourly = df.groupby([(df.index.hour)]).sum(numeric_only=True)
 plot = hourly.plot(title=nmi, kind="bar", y=["E1"])
 plt.show()
 ```
