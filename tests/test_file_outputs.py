@@ -41,7 +41,7 @@ def test_data_frame_output():
     file_name = "examples/unzipped/Example_NEM12_actual_interval.csv"
     output_dfs = output_as_data_frames(file_name)
     for nmi, df in output_dfs:
-        assert type(nmi) == str
+        assert isinstance(nmi, str)
         assert df["quality_method"][0] == "A"
 
 
@@ -50,7 +50,7 @@ def test_data_frame_output_different_interval():
     file_name = "examples/unzipped/Example_NEM12_different_interval_length.csv"
     output_dfs = output_as_data_frames(file_name)
     nmi, df = output_dfs[0]  # Return data for first NMI in file
-    assert type(nmi) == str
+    assert isinstance(nmi, str)
     assert df["V1"].count() == 144
     assert df["E1"].count() == 48
 
@@ -61,5 +61,5 @@ def test_data_frame_output_nem13():
     output_dfs = output_as_data_frames(file_name)
     for nmi, df in output_dfs:
         print(df.head())
-        assert type(nmi) == str
+        assert isinstance(nmi, str)
         assert df["quality_method"][0] == "E64"

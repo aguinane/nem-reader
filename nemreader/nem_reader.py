@@ -233,9 +233,9 @@ class NEMFile:
             yield nmi, nmi_df
 
 
-def flatten_list(l: List[list]) -> list:
+def flatten_list(items: List[list]) -> list:
     """takes a list of lists, l and returns a flat list"""
-    return [v for inner_l in l for v in inner_l]
+    return [v for inner_l in items for v in inner_l]
 
 
 def read_nem_file(file_path: str, ignore_missing_header=False) -> NEMData:

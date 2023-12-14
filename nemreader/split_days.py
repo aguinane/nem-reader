@@ -1,8 +1,11 @@
+import logging
 from datetime import datetime, timedelta
 from statistics import mean
 from typing import Generator, Iterable, Tuple
 
 from .nem_objects import Reading
+
+log = logging.getLogger(__name__)
 
 
 def split_multiday_reads(
@@ -81,11 +84,14 @@ def get_group_end(end_date: datetime, interval: int = 30) -> datetime:
 
 
 def make_set_interval(
-    readings: Iterable[Reading], new_interval: int = 5
+    readings: Iterable[Reading],
+    new_interval: int = 5,
+    skip_mistmatched_intervals: bool = True,
 ) -> Iterable[Reading]:
     """Generate equally spaced values at 5-min intervals"""
     delta = timedelta(seconds=new_interval * 60)
     group_records = {}
+    mismatched_interval = False
     for r in readings:
         interval = r.t_end - r.t_start
         if interval == delta:  # No change required
@@ -93,7 +99,17 @@ def make_set_interval(
             continue
 
         if interval > delta:  # Need to split up smaller
-            intervals = list(new_intervals(r.t_start, r.t_end, interval=new_interval))
+            try:
+                intervals = list(
+                    new_intervals(r.t_start, r.t_end, interval=new_interval)
+                )
+            except ValueError as e:
+                if skip_mistmatched_intervals:
+                    mismatched_interval = True
+                    continue  # Interval cannot be converted
+                else:
+                    raise (e)
+
             if r.uom and r.uom[-1].lower() == "h":
                 split_val = r.read_value / len(intervals)
             else:
@@ -120,6 +136,9 @@ def make_set_interval(
                 group_records[group_end] = [r]
             else:
                 group_records[group_end].append(r)
+
+    if mismatched_interval:
+        log.error("Mismatched intervals, some values could not be interpolated")
 
     # Output any aggregated grouped values
     for group_end in sorted(group_records.keys()):
