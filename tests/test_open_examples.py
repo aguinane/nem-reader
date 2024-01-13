@@ -16,6 +16,20 @@ def test_unzipped_examples():
         meter_data = nf.nem_data()
         assert meter_data.header.version_header in ["NEM12", "NEM13"]
 
+def test_blob_load():
+    """Loads a file into a buffer then passes it into be processed"""
+    skips = ["Example_NEM12_powercor.csv", "Example_NEM12_powercor_missing_fields.csv"]
+    test_path = os.path.abspath("examples/unzipped")
+    for file_name in os.listdir(test_path):
+        if file_name in skips:
+            continue
+        test_filename = os.path.join(test_path, file_name)
+        """Blob load here"""
+        with open(test_filename, 'rb') as test_file:
+            blob = test_file.read()
+            nf = NEMFile(test_filename, strict=True, data_blob=blob)
+            meter_data = nf.nem_data()
+            assert meter_data.header.version_header in ["NEM12", "NEM13"]
 
 def test_nem12_examples():
     """Open and parse zipped NEM12 example files"""
