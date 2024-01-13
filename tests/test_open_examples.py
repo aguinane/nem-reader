@@ -16,6 +16,7 @@ def test_unzipped_examples():
         meter_data = nf.nem_data()
         assert meter_data.header.version_header in ["NEM12", "NEM13"]
 
+
 def test_blob_load():
     """Loads a file into a buffer then passes it into be processed"""
     skips = ["Example_NEM12_powercor.csv", "Example_NEM12_powercor_missing_fields.csv"]

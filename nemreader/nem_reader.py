@@ -30,7 +30,7 @@ minutes_per_day = 24 * 60
 class NEMFile:
     """An NEM file object"""
 
-    def __init__(self, file_path: str, strict: bool = False, data_blob = False) -> None:
+    def __init__(self, file_path: str, strict: bool=False, data_blob=False) -> None:
         self.file_path = file_path
         self.strict = strict
         self._nmis: set = set()
@@ -113,7 +113,7 @@ class NEMFile:
                     # So decode then convert back to list
                     nmi_file = csv_text.read().decode("utf-8").splitlines()
                 reads = self.parse_nem_file(nmi_file, file_name=csv_file)
-        if self._data_blob != False:
+        if self._data_blob is not False:
             nmi_file = self._data_blob.decode("utf-8").splitlines()
             reads = self.parse_nem_file(nmi_file)
         else:
