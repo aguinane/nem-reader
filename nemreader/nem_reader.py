@@ -2,6 +2,7 @@ import csv
 import logging
 import os
 import zipfile
+import io
 from datetime import datetime, timedelta
 from itertools import chain, islice
 from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple
@@ -30,23 +31,15 @@ minutes_per_day = 24 * 60
 class NEMFile:
     """An NEM file object"""
 
-    def __init__(self, file_path: str, strict: bool=False, data_blob=False) -> None:
+    def __init__(self, file_path, fileobj=None, strict: bool=False) -> None:
         self.file_path = file_path
+        self.fileobj = fileobj
         self.strict = strict
         self._nmis: set = set()
         self._nmi_channels: dict = {}
-        self._data_blob = data_blob
 
     def __repr__(self):
         return f"<NEMFile {self.file_path}>"
-
-    @property
-    def zipped(self) -> bool:
-        """Check whether file is zipped or not"""
-        _, file_extension = os.path.splitext(self.file_path)
-        if file_extension.lower() == ".zip":
-            return True
-        return False
 
     @property
     def nmis(self) -> set:
@@ -101,24 +94,32 @@ class NEMFile:
 
     def nem_data(self) -> NEMData:
         """Return data in legacy data format"""
-        if self.zipped:
-            log.debug("Extracting zip file")
-            with zipfile.ZipFile(self.file_path, "r") as archive:
-                files = archive.namelist()
-                if len(files) > 1:
-                    raise ValueError("Only zip files with one file are supported")
-                csv_file = files[0]
-                with archive.open(csv_file) as csv_text:
-                    # Zip file is open in binary mode
-                    # So decode then convert back to list
-                    nmi_file = csv_text.read().decode("utf-8").splitlines()
-                reads = self.parse_nem_file(nmi_file, file_name=csv_file)
-        if self._data_blob is not False:
-            nmi_file = self._data_blob.decode("utf-8").splitlines()
-            reads = self.parse_nem_file(nmi_file)
-        else:
-            with open(self.file_path) as nmi_file:
-                reads = self.parse_nem_file(nmi_file)
+        try:
+            if not isinstance(self.fileobj, io.IOBase):
+                datafile = zipfile.ZipFile(self.file_path)
+            else:
+                datafile = zipfile.ZipFile(self.fileobj)
+            files = datafile.namelist()
+            if len(files) > 1:
+                raise ValueError("Only zip files with one file are supported")
+            csv_file = files[0]
+            with datafile.open(csv_file) as csv_text:
+                # Zip file is open in binary mode
+                # So decode then convert back to list
+                nmi_file = csv_text.read().decode("utf-8").splitlines()
+            reads = self.parse_nem_file(nmi_file, file_name=csv_file)
+        except zipfile.BadZipFile:
+            """Not a zip"""
+            if not isinstance(self.fileobj, io.IOBase):
+                datafile = open(self.file_path, 'r')
+            else:
+                """If we've been given a binary IO stream change it"""
+                if not isinstance(self.fileobj, io.TextIOBase):
+                    datafile = self.fileobj.read().decode("utf-8")
+                else:
+                    datafile = self.fileobj
+            reads = self.parse_nem_file(datafile, file_name=self.file_path)
+                
         for nmi in reads.transactions.keys():
             self._nmis.add(nmi)
             suffixes = list(reads.transactions[nmi].keys())
