@@ -13,7 +13,6 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.8",
     "Operating System :: OS Independent",
 ]
 keywords = ["energy", "NEM12", "NEM13"]
