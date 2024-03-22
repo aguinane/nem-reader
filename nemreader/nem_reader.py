@@ -5,7 +5,7 @@ import zipfile
 import io
 from datetime import datetime, timedelta
 from itertools import chain, islice
-from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple
+from typing import Any, Optional
 
 import pandas as pd
 
@@ -80,7 +80,7 @@ class NEMFile:
         else:
             header = parse_100_row(first_row, file_name)
             if header.version_header not in ["NEM12", "NEM13"]:
-                raise ValueError("Invalid NEM version {}".format(header.version_header))
+                raise ValueError(f"Invalid NEM version {header.version_header}")
 
         self.header = header
         if header.assumed:
@@ -136,8 +136,8 @@ class NEMFile:
         """Return NEMData as a DataFrame"""
         nd = self.nem_data()
         frames = []
-        for nmi in nd.readings.keys():
-            for suffix in nd.readings[nmi].keys():
+        for nmi in nd.readings:
+            for suffix in nd.readings[nmi]:
                 reads = nd.readings[nmi][suffix]
 
                 if split_days or set_interval:
@@ -220,7 +220,7 @@ class NEMFile:
         split_days: bool = False,
         set_interval: Optional[int] = None,
         include_serno: bool = False,
-    ) -> Generator[Tuple[str, pd.DataFrame], None, None]:
+    ) -> Generator[tuple[str, pd.DataFrame], None, None]:
         df = self.get_pivot_data_frame(split_days, set_interval, include_serno)
         nmis = df.nmi.unique()
         for nmi in nmis:
@@ -229,7 +229,7 @@ class NEMFile:
             yield nmi, nmi_df
 
 
-def flatten_list(items: List[list]) -> list:
+def flatten_list(items: list[list]) -> list:
     """takes a list of lists, l and returns a flat list"""
     return [v for inner_l in items for v in inner_l]
 
@@ -247,7 +247,7 @@ def read_nem_file(file_path: str, ignore_missing_header=False) -> NEMData:
     return nf.nem_data()
 
 
-def parse_100_row(row: List[Any], file_name: str) -> HeaderRecord:
+def parse_100_row(row: list[Any], file_name: str) -> HeaderRecord:
     """Parse header record (100)
 
     RecordIndicator,VersionHeader,DateTime,FromParticipant,ToParticipant
@@ -261,9 +261,9 @@ def parse_100_row(row: List[Any], file_name: str) -> HeaderRecord:
 def parse_nem12_rows(nem_list: Iterable, file_name=None) -> NEMReadings:
     """Parse NEM row iterator and return meter readings named tuple"""
     # readings nested by NMI then channel
-    readings: Dict[str, Dict[str, List[Reading]]] = {}
+    readings: dict[str, dict[str, list[Reading]]] = {}
     # transactions nested by NMI then channel
-    trans: Dict[str, Dict[str, list]] = {}
+    trans: dict[str, dict[str, list]] = {}
     nmi_d = None  # current NMI details block that readings apply to
 
     observed_900_records = []
@@ -362,9 +362,9 @@ def parse_nem12_rows(nem_list: Iterable, file_name=None) -> NEMReadings:
 def parse_nem13_rows(nem_list: Iterable) -> NEMReadings:
     """Parse NEM row iterator and return meter readings named tuple"""
     # readings nested by NMI then channel
-    readings: Dict[str, Dict[str, List[Reading]]] = {}
+    readings: dict[str, dict[str, list[Reading]]] = {}
     # transactions nested by NMI then channel
-    trans: Dict[str, Dict[str, list]] = {}
+    trans: dict[str, dict[str, list]] = {}
     nmi_d = None  # current NMI details block that readings apply to
 
     for row in nem_list:
@@ -508,7 +508,7 @@ def parse_300_row(
     if len(row) < num_intervals + num_required_non_reading_fields:
         num_rows = len(row) - num_required_non_reading_fields
         raise ValueError(
-            f"Unexpected number of values in 300 row: " +
+            "Unexpected number of values in 300 row: " +
             f"{num_rows} readings for {interval}min intervals"
         )
     quality_method = row[last_interval]
@@ -550,7 +550,7 @@ def parse_interval_records(
     meter_serial_number,
     event_code: str = "",
     event_desc: str = "",
-) -> List[Reading]:
+) -> list[Reading]:
     """Convert interval values into tuples with datetime"""
     interval_delta = timedelta(minutes=interval)
     return [

@@ -16,7 +16,7 @@ def test_unit_capitalisation():
     df_60min = nf.get_pivot_data_frame(split_days=True, set_interval=60)
 
     for nmi, nmi_readings in meter_data.readings.items():
-        for key in nmi_readings.keys():
+        for key in nmi_readings:
             assert nmi_readings[key][0].t_end - nmi_readings[key][
                 0
             ].t_start == pd.Timedelta(minutes=30)

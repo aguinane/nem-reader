@@ -17,13 +17,12 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 keywords = ["energy", "NEM12", "NEM13"]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dynamic = ["version", "description"]
 dependencies = ["pandas", "sqlite_utils", "typer"]
 
 [project.optional-dependencies]
-test = ["pytest >=2.7.3", "pytest-cov", "mypy"]
-dev = ["black", "flake8", "flake8-bugbear", "pep8-naming", "flake8-builtins"]
+test = ["ruff", "pytest >=2.7.3", "pytest-cov", "mypy"]
 
 [project.urls]
 Source = "https://github.com/aguinane/nem-reader/"
@@ -45,3 +44,6 @@ omit = ["*/version.py", '*/__main__.py']
 show_missing = true
 skip_empty = true
 fail_under = 90
+
+[tool.ruff.lint]
+select = ["A", "B", "E", "F", "I", "N", "SIM", "UP"]

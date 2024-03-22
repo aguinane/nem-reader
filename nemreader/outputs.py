@@ -1,8 +1,9 @@
 import csv
 import logging
 import os
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional, Tuple
+from typing import Any, Optional
 
 import pandas as pd
 
@@ -13,12 +14,11 @@ from .split_days import split_multiday_reads
 log = logging.getLogger(__name__)
 
 
-def nmis_in_file(file_name) -> Generator[Tuple[str, List[str]], None, None]:
+def nmis_in_file(file_name) -> Generator[tuple[str, list[str]], None, None]:
     """Return list of NMIs in file"""
     nf = NEMFile(file_name, strict=False)
     nf.nem_data()
-    for nmi, suffixes in nf.nmi_channels.items():
-        yield nmi, suffixes
+    yield from nf.nmi_channels.items()
 
 
 def output_as_data_frames(
@@ -26,7 +26,7 @@ def output_as_data_frames(
     split_days: bool = True,
     set_interval: Optional[int] = None,
     strict: bool = False,
-) -> List[Tuple[str, pd.DataFrame]]:
+) -> list[tuple[str, pd.DataFrame]]:
     """Return list of data frames for each NMI"""
     nf = NEMFile(file_name, strict=strict)
     data_frames = []
@@ -64,7 +64,7 @@ def output_as_csv(file_name, output_dir=".", set_interval: Optional[int] = None)
     return output_paths
 
 
-def save_to_csv(headings: List[str], rows: List[list], output_path):
+def save_to_csv(headings: list[str], rows: list[list], output_path):
     """save data to csv file"""
     with open(output_path, "w", newline="") as csvfile:
         cwriter = csv.writer(
@@ -79,10 +79,10 @@ def save_to_csv(headings: List[str], rows: List[list], output_path):
 
 def flatten_and_group_rows(
     nmi: str,
-    nmi_transactions: Dict[str, list],
-    nmi_readings: Dict[str, List[Reading]],
+    nmi_transactions: dict[str, list],
+    nmi_readings: dict[str, list[Reading]],
     date_format: str = "%Y%m%d",
-) -> List[list]:
+) -> list[list]:
     """Create flattened list of NMI reading data"""
 
     channels = list(nmi_transactions.keys())
@@ -114,17 +114,17 @@ def flatten_and_group_rows(
             except KeyError:
                 date_totals[t_group] = val
 
-            if t_group not in date_qualities.keys():
+            if t_group not in date_qualities:
                 date_qualities[t_group] = set()
             date_qualities[t_group].add(quality)
 
-        for day in date_totals.keys():
+        for day in date_totals:
             day_total = date_totals[day]
             qualities = list(date_qualities[day])
             day_quality = "".join(qualities)
             if len(day_quality) > 1:
                 day_quality = "V"  # Multiple quality methods
-            row: List[Any] = [nmi, sn, day, ch, day_total, uom, day_quality]
+            row: list[Any] = [nmi, sn, day, ch, day_total, uom, day_quality]
             rows.append(row)
     return rows
 

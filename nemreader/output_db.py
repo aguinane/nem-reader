@@ -3,7 +3,7 @@ import os
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import List, NamedTuple, Optional, Tuple
+from typing import NamedTuple, Optional
 
 from dateutil.parser import isoparse
 from sqlite_utils import Database
@@ -132,7 +132,7 @@ def time_of_day(start: datetime) -> str:
     return "Night"
 
 
-def get_nmis(db_path: Path) -> List[str]:
+def get_nmis(db_path: Path) -> list[str]:
     nmis = []
     db = Database(db_path)
     for row in db.query("select distinct nmi from nmi_summary"):
@@ -140,7 +140,7 @@ def get_nmis(db_path: Path) -> List[str]:
     return nmis
 
 
-def get_nmi_channels(db_path: Path, nmi: str) -> List[str]:
+def get_nmi_channels(db_path: Path, nmi: str) -> list[str]:
     channels = []
     db = Database(db_path)
     for row in db.query("select * from nmi_summary where nmi = :nmi", {"nmi": nmi}):
@@ -148,7 +148,7 @@ def get_nmi_channels(db_path: Path, nmi: str) -> List[str]:
     return channels
 
 
-def get_nmi_date_range(db_path: Path, nmi: str) -> Tuple[datetime, datetime]:
+def get_nmi_date_range(db_path: Path, nmi: str) -> tuple[datetime, datetime]:
     db = Database(db_path)
     sql = """select MIN(first_interval) start, MAX(last_interval) end
             from nmi_summary where nmi = :nmi
@@ -165,7 +165,7 @@ class EnergyReading(NamedTuple):
     value: float
 
 
-def get_nmi_readings(db_path: Path, nmi: str, channel: str) -> List[EnergyReading]:
+def get_nmi_readings(db_path: Path, nmi: str, channel: str) -> list[EnergyReading]:
     reads = []
     db = Database(db_path)
     for r in db.query(
@@ -196,7 +196,7 @@ def calc_nmi_daily_summary(db_path: Path, nmi: str):
                 tod = time_of_day(read.start)
                 imp_values[day][tod] += read.value
 
-    for day in imp_values.keys():
+    for day in imp_values:
         imp1 = round(imp_values[day]["Morning"], 3)
         imp2 = round(imp_values[day]["Day"], 3)
         imp3 = round(imp_values[day]["Evening"], 3)
