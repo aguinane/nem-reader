@@ -31,7 +31,7 @@ minutes_per_day = 24 * 60
 class NEMFile:
     """An NEM file object"""
 
-    def __init__(self, file_path, fileobj=None, strict: bool=False) -> None:
+    def __init__(self, file_path, fileobj=None, strict: bool = False) -> None:
         self.file_path = file_path
         self.fileobj = fileobj
         self.strict = strict
@@ -111,7 +111,7 @@ class NEMFile:
         except zipfile.BadZipFile:
             """Not a zip"""
             if not isinstance(self.fileobj, io.IOBase):
-                datafile = open(self.file_path)
+                datafile = open(self.file_path)  # noqa: SIM115
             else:
                 """If we've been given a binary IO stream change it"""
                 if not isinstance(self.fileobj, io.TextIOBase):
@@ -119,8 +119,8 @@ class NEMFile:
                 else:
                     datafile = self.fileobj
             reads = self.parse_nem_file(datafile, file_name=self.file_path)
-                
-        for nmi in reads.transactions.keys():
+
+        for nmi in reads.transactions:
             self._nmis.add(nmi)
             suffixes = list(reads.transactions[nmi].keys())
             self._nmi_channels[nmi] = suffixes
@@ -281,7 +281,8 @@ def parse_nem12_rows(nem_list: Iterable, file_name=None) -> NEMReadings:
                 # try to keep parsing anyway.
                 if observed_900_records:
                     log.warning(
-                        f"Found multiple end of data (900) rows on lines {observed_900_records}"
+                        "Found multiple end of data (900) rows on lines %s",
+                        observed_900_records,
                     )
 
                 observed_900_records.append(row_num)
@@ -449,12 +450,14 @@ def parse_200_row(row: list) -> NmiDetails:
 def parse_250_row(row: list) -> BasicMeterData:
     """Parse basic meter data record (250)
 
-        RecordIndicator,NMI,NMIConfiguration,RegisterID,NMISuffix,MDMDataStreamIdentifier,MeterSeri
-    alNumber,DirectionIndicator,PreviousRegisterRead,PreviousRegisterReadDateTime,PreviousQuali
-    tyMethod,PreviousReasonCode,PreviousReasonDescription,CurrentRegisterRead,CurrentRegister
-    ReadDateTime,CurrentQualityMethod,CurrentReasonCode,CurrentReasonDescription,Quantity,U
-    OM,NextScheduledReadDate,UpdateDateTime,MSATSLoadDateTime
-        Example: 250,1234567890,1141,01,11,11,METSER66,E,000021.2,20031001103230,A,,,000534.5,20040201100030,E64,77,,343.5,kWh,20040509, 20040202125010,20040203000130
+    RecordIndicator,NMI,NMIConfiguration,RegisterID,NMISuffix,
+    MDMDataStreamIdentifier,MeterSerialNumber,DirectionIndicator,
+    PreviousRegisterRead,PreviousRegisterReadDateTime,PreviousQualityMethod,
+    PreviousReasonCode,PreviousReasonDescription,CurrentRegisterRead,
+    CurrentRegisterReadDateTime,CurrentQualityMethod,CurrentReasonCode,
+    CurrentReasonDescription,Quantity,UOM,
+    NextScheduledReadDate,UpdateDateTime,MSATSLoadDateTime
+
     """
     return BasicMeterData(
         row[1],
@@ -508,8 +511,8 @@ def parse_300_row(
     if len(row) < num_intervals + num_required_non_reading_fields:
         num_rows = len(row) - num_required_non_reading_fields
         raise ValueError(
-            "Unexpected number of values in 300 row: " +
-            f"{num_rows} readings for {interval}min intervals"
+            "Unexpected number of values in 300 row: "
+            + f"{num_rows} readings for {interval}min intervals"
         )
     quality_method = row[last_interval]
 
@@ -593,17 +596,17 @@ def parse_400_row(row: list, interval_length: int) -> tuple:
     start_interval = int(row[1])
     end_interval = int(row[2])
     if end_interval < start_interval:
-        raise ValueError(
-            f"End interval {end_interval} is earlier than start interval {start_interval} in 400 row."
-        )
+        msg = f"End interval {end_interval} is earlier than "
+        msg += f"start interval {start_interval} in 400 row."
+        raise ValueError(msg)
     if not (0 < start_interval <= num_intervals):
-        raise ValueError(
-            f"Invalid start interval {start_interval} in 400 row. Expecting {num_intervals} intervals."
-        )
+        msg = f"Invalid start interval {start_interval} in 400 row."
+        msg += " Expecting {num_intervals} intervals."
+        raise ValueError(msg)
     if not (0 < end_interval <= num_intervals):
-        raise ValueError(
-            f"Invalid end interval {end_interval} in 400 row. Expecting {num_intervals} intervals."
-        )
+        msg = f"Invalid end interval {end_interval} in 400 row."
+        msg += f"Expecting {num_intervals} intervals."
+        raise ValueError(msg)
 
     return EventRecord(int(row[1]), int(row[2]), row[3], row[4], row[5])
 
