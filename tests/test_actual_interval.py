@@ -3,7 +3,7 @@ import pytest
 from nemreader import NEMFile
 
 
-def test_correct_NMIs():
+def test_correct_nmis():
     nf = NEMFile("examples/unzipped/Example_NEM12_actual_interval.csv", strict=True)
     meter_data = nf.nem_data()
     assert len(meter_data.readings) == 1

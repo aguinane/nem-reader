@@ -187,7 +187,7 @@ def calc_nmi_daily_summary(db_path: Path, nmi: str):
     for ch in channels:
         if ch[0] not in ["B", "E"]:
             continue  # Skip other channels
-        feed_in = True if ch[0] == "B" else False
+        feed_in = ch[0] == "B"
         for read in get_nmi_readings(db_path, nmi, ch):
             day = read.start.strftime("%Y-%m-%d")
             if feed_in:
@@ -230,7 +230,8 @@ def extend_sqlite(db_path: Path) -> None:
     db.create_view(
         "combined_readings",
         """
-    SELECT nmi, t_start, t_end, SUM(CASE WHEN substr(channel,1,1) = 'B' THEN -1 * value ELSE value END) as value
+    SELECT nmi, t_start, t_end, 
+    SUM(CASE WHEN substr(channel,1,1) = 'B' THEN -1 * value ELSE value END) as value
     FROM readings
     GROUP BY nmi, t_start, t_end
     ORDER BY 1, 2

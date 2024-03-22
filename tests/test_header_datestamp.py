@@ -3,7 +3,7 @@ import datetime
 from nemreader import NEMFile
 
 
-def test_Date12_parse():
+def test_date12_parse():
     """test that Date12 is parsed correctly"""
     # 200402070911 = 2004-02-07, 09:11
     nf = NEMFile("examples/unzipped/Example_NEM12_multiple_meters.csv", strict=True)

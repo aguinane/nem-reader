@@ -26,10 +26,11 @@ def test_blob_load():
             continue
         test_filename = os.path.join(test_path, file_name)
         """Blob load here"""
-        with open(test_filename, 'rb') as test_file:
+        with open(test_filename, "rb") as test_file:
             nf = NEMFile(test_file, strict=True)
             meter_data = nf.nem_data()
             assert meter_data.header.version_header in ["NEM12", "NEM13"]
+
 
 def test_nem12_examples():
     """Open and parse zipped NEM12 example files"""

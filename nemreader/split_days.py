@@ -55,7 +55,11 @@ def split_reading_into_days(start, end, val):
             period_end = end
         period_secs = (period_end - period_start).total_seconds()
         period_val = val * (period_secs / total_secs)
-        yield period_start, period_end, period_val,
+        yield (
+            period_start,
+            period_end,
+            period_val,
+        )
         period_start += timedelta(days=1)
         period_end += timedelta(days=1)
 
