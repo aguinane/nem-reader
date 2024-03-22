@@ -1,8 +1,8 @@
 import csv
-import logging
-import os
-import zipfile
 import io
+import logging
+import zipfile
+from collections.abc import Generator, Iterable
 from datetime import datetime, timedelta
 from itertools import chain, islice
 from typing import Any, Optional
@@ -111,7 +111,7 @@ class NEMFile:
         except zipfile.BadZipFile:
             """Not a zip"""
             if not isinstance(self.fileobj, io.IOBase):
-                datafile = open(self.file_path, 'r')
+                datafile = open(self.file_path)
             else:
                 """If we've been given a binary IO stream change it"""
                 if not isinstance(self.fileobj, io.TextIOBase):
