@@ -1,11 +1,11 @@
 name: Python package
 
 on: ["pull_request"]
-
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
@@ -21,6 +21,8 @@ jobs:
           # install the local folder
           python -m pip install -e .
       - name: Test with pytest
+        env: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pip install pytest pytest-cov
           pytest --cov-report=xml
