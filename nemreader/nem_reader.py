@@ -113,7 +113,7 @@ class NEMFile:
                     # So decode then convert back to list
                     nmi_file = csv_text.read().decode("utf-8").splitlines()
                 reads = self.parse_nem_file(nmi_file, file_name=csv_file)
-                for nmi in reads.transactions.keys():
+                for nmi in reads.transactions:
                     self._nmis.add(nmi)
                     suffixes = list(reads.transactions[nmi].keys())
                     self._nmi_channels[nmi] = suffixes
@@ -125,7 +125,7 @@ class NEMFile:
 
         with open(self.file_path) as nmi_file:
             reads = self.parse_nem_file(nmi_file)
-        for nmi in reads.transactions.keys():
+        for nmi in reads.transactions:
             self._nmis.add(nmi)
             suffixes = list(reads.transactions[nmi].keys())
             self._nmi_channels[nmi] = suffixes
@@ -141,8 +141,8 @@ class NEMFile:
         """Return NEMData as a DataFrame"""
         nd = self.nem_data()
         frames = []
-        for nmi in nd.readings.keys():
-            for suffix in nd.readings[nmi].keys():
+        for nmi in nd.readings:
+            for suffix in nd.readings[nmi]:
                 reads = nd.readings[nmi][suffix]
 
                 if split_days or set_interval:

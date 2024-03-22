@@ -37,10 +37,7 @@ def callback(
 def list_nmis(
     nemfile: Path, verbose: bool = typer.Option(False, "--verbose", "-v")
 ) -> None:
-    if verbose:
-        log_level = "DEBUG"
-    else:
-        log_level = "WARNING"
+    log_level = "DEBUG" if verbose else "WARNING"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
 
     nmis = list(nmis_in_file(nemfile))
@@ -67,10 +64,7 @@ def output_csv(
 
     nemfile is the name of the file to parse.
     """
-    if verbose:
-        log_level = "DEBUG"
-    else:
-        log_level = "WARNING"
+    log_level = "DEBUG" if verbose else "WARNING"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
     for fname in output_as_csv(nemfile, output_dir=outdir, set_interval=set_interval):
         typer.echo(f"Created {fname}")
@@ -92,10 +86,7 @@ def output_csv_daily(
 
     nemfile is the name of the file to parse.
     """
-    if verbose:
-        log_level = "DEBUG"
-    else:
-        log_level = "WARNING"
+    log_level = "DEBUG" if verbose else "WARNING"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
     fname = output_as_daily_csv(nemfile, output_dir=outdir)
     typer.echo(f"Created {fname}")
@@ -119,10 +110,7 @@ def output_sqlite(
 
     nemfile is the name of the file or folder to parse.
     """
-    if verbose:
-        log_level = "DEBUG"
-    else:
-        log_level = "WARNING"
+    log_level = "DEBUG" if verbose else "WARNING"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
     if os.path.isdir(nemfile):
         typer.echo(f"Getting files in directory {nemfile}")

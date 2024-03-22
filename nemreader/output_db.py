@@ -196,7 +196,7 @@ def calc_nmi_daily_summary(db_path: Path, nmi: str):
                 tod = time_of_day(read.start)
                 imp_values[day][tod] += read.value
 
-    for day in imp_values.keys():
+    for day in imp_values:
         imp1 = round(imp_values[day]["Morning"], 3)
         imp2 = round(imp_values[day]["Day"], 3)
         imp3 = round(imp_values[day]["Evening"], 3)

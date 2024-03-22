@@ -18,8 +18,7 @@ def nmis_in_file(file_name) -> Generator[tuple[str, list[str]], None, None]:
     """Return list of NMIs in file"""
     nf = NEMFile(file_name, strict=False)
     nf.nem_data()
-    for nmi, suffixes in nf.nmi_channels.items():
-        yield nmi, suffixes
+    yield from nf.nmi_channels.items()
 
 
 def output_as_data_frames(
@@ -115,11 +114,11 @@ def flatten_and_group_rows(
             except KeyError:
                 date_totals[t_group] = val
 
-            if t_group not in date_qualities.keys():
+            if t_group not in date_qualities:
                 date_qualities[t_group] = set()
             date_qualities[t_group].add(quality)
 
-        for day in date_totals.keys():
+        for day in date_totals:
             day_total = date_totals[day]
             qualities = list(date_qualities[day])
             day_quality = "".join(qualities)
