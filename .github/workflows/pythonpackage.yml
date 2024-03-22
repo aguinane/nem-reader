@@ -21,8 +21,14 @@ jobs:
           # install the local folder
           python -m pip install -e .
       - name: Test with pytest
-        env: 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pip install pytest pytest-cov
           pytest --cov-report=xml
+      - name: Coveralls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        run: |
+          pip install coveralls
+          coverage run --source=nemwriter -m pytest tests/
+          coveralls
