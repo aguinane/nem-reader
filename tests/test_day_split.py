@@ -12,7 +12,7 @@ def test_split_interval():
         delta = pd.Timedelta(first.t_end - first.t_start).seconds
         assert delta == 60 * 1
 
-        assert first.E1 == 1.111 / 30
+        assert 1.111 / 30 == first.E1
 
 
 def test_group_interval():
@@ -24,4 +24,4 @@ def test_group_interval():
         delta = pd.Timedelta(first.t_end - first.t_start).seconds
         assert delta == 60 * 60
 
-        assert first.E1 == 1.111 * 2
+        assert 1.111 * 2 == first.E1

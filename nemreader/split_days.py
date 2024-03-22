@@ -1,7 +1,7 @@
 import logging
+from collections.abc import Generator, Iterable
 from datetime import datetime, timedelta
 from statistics import mean
-from typing import Generator, Iterable, Tuple
 
 from .nem_objects import Reading
 
@@ -62,7 +62,7 @@ def split_reading_into_days(start, end, val):
 
 def new_intervals(
     start_date: datetime, end_date: datetime, interval: float = 5
-) -> Generator[Tuple[datetime, datetime], None, None]:
+) -> Generator[tuple[datetime, datetime], None, None]:
     """Generate equally spaced intervals between two dates"""
     delta = timedelta(seconds=interval * 60)
     orig_delta = end_date - start_date

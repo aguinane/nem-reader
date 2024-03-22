@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, NamedTuple, Optional
+from typing import NamedTuple, Optional
 
 
 class HeaderRecord(NamedTuple):
@@ -74,7 +74,7 @@ class IntervalRecord(NamedTuple):
     """Interval data record (300)"""
 
     interval_date: Optional[datetime]
-    interval_values: List[Reading]
+    interval_values: list[Reading]
     quality_method: str
     meter_serial_number: str
     reason_code: str
@@ -114,8 +114,8 @@ class B2BDetails13(NamedTuple):
 class NEMReadings:
     """Represents a meter reading"""
 
-    readings: Dict[str, Dict[str, List[Reading]]]
-    transactions: Dict[str, Dict[str, list]]
+    readings: dict[str, dict[str, list[Reading]]]
+    transactions: dict[str, dict[str, list]]
 
     def __init__(self, readings, transactions):
         self.readings = readings
@@ -129,8 +129,8 @@ class NEMData:
     """Represents a meter reading"""
 
     header: HeaderRecord
-    readings: Dict[str, Dict[str, List[Reading]]]
-    transactions: Dict[str, Dict[str, list]]
+    readings: dict[str, dict[str, list[Reading]]]
+    transactions: dict[str, dict[str, list]]
 
     def __init__(self, header, readings, transactions):
         self.header = header
@@ -138,7 +138,7 @@ class NEMData:
         self.transactions = transactions
 
     @property
-    def nmis(self) -> List[str]:
+    def nmis(self) -> list[str]:
         return list(self.transactions.keys())
 
     class Config:
