@@ -194,24 +194,30 @@ class NEMFile:
         for col in df.columns:
             if "value_" in col:
                 new_names[col] = col[6:]
+
             if "quality" in col:
-                if not quality:
+                perc_nans = df[col].isna().sum() / len(df[col])
+                if not quality and perc_nans < 0.5:
                     new_names[col] = "quality"
+                    quality += 1
                 else:
                     del df[col]
-                quality += 1
+
             if "evt_code" in col:
-                if not evt_code:
+                perc_nans = df[col].isna().sum() / len(df[col])
+                if not evt_code and perc_nans < 0.5:
                     new_names[col] = "evt_code"
+                    evt_code += 1
                 else:
                     del df[col]
-                evt_code += 1
+
             if "evt_desc" in col:
-                if not evt_desc:
+                perc_nans = df[col].isna().sum() / len(df[col])
+                if not evt_desc and perc_nans < 0.5:
                     new_names[col] = "evt_desc"
+                    evt_desc += 1
                 else:
                     del df[col]
-                evt_desc += 1
         df.rename(columns=new_names, inplace=True)
         return df
 
