@@ -3,7 +3,7 @@ import logging
 import os
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -24,7 +24,7 @@ def nmis_in_file(file_name) -> Generator[tuple[str, list[str]], None, None]:
 def output_as_data_frames(
     file_name,
     split_days: bool = True,
-    set_interval: Optional[int] = None,
+    set_interval: int | None = None,
     strict: bool = False,
 ) -> list[tuple[str, pd.DataFrame]]:
     """Return list of data frames for each NMI"""
@@ -38,7 +38,7 @@ def output_as_data_frames(
     return data_frames
 
 
-def output_as_csv(file_name, output_dir=".", set_interval: Optional[int] = None):
+def output_as_csv(file_name, output_dir=".", set_interval: int = 0):
     """
     Transpose all channels and output a csv that is easier
     to read and do charting on

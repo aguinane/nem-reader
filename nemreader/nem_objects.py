@@ -1,12 +1,12 @@
 from datetime import datetime
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 
 class HeaderRecord(NamedTuple):
     """Header record (100)"""
 
     version_header: str
-    creation_date: Optional[datetime]
+    creation_date: datetime | None
     from_participant: str
     to_participant: str
     file_name: str
@@ -24,7 +24,7 @@ class NmiDetails(NamedTuple):
     meter_serial_number: str
     uom: str
     interval_length: int
-    next_scheduled_read_date: Optional[datetime]
+    next_scheduled_read_date: datetime | None
 
 
 class Reading(NamedTuple):
@@ -35,12 +35,12 @@ class Reading(NamedTuple):
     read_value: float
     uom: str
     meter_serial_number: str
-    quality_method: Optional[str]
-    event_code: Optional[str]
-    event_desc: Optional[str]
+    quality_method: str | None
+    event_code: str | None
+    event_desc: str | None
     # Below attributes relevant for NEM13 only
-    val_start: Optional[float]
-    val_end: Optional[float]
+    val_start: float | None
+    val_end: float | None
 
 
 class BasicMeterData(NamedTuple):
@@ -54,33 +54,33 @@ class BasicMeterData(NamedTuple):
     meter_serial_number: str
     direction_indicator: str
     previous_register_read: str
-    previous_register_read_datetime: Optional[datetime]
+    previous_register_read_datetime: datetime | None
     previous_quality_method: str
     previous_reason_code: int
     previous_reason_description: str
     current_register_read: str
-    current_register_read_datetime: Optional[datetime]
+    current_register_read_datetime: datetime | None
     current_quality_method: str
     current_reason_code: int
     current_reason_description: str
     quantity: float
     uom: str
-    next_scheduled_read_date: Optional[datetime]
-    update_datetime: Optional[datetime]
-    msats_load_datetime: Optional[datetime]
+    next_scheduled_read_date: datetime | None
+    update_datetime: datetime | None
+    msats_load_datetime: datetime | None
 
 
 class IntervalRecord(NamedTuple):
     """Interval data record (300)"""
 
-    interval_date: Optional[datetime]
+    interval_date: datetime | None
     interval_values: list[Reading]
     quality_method: str
     meter_serial_number: str
     reason_code: str
     reason_description: str
-    update_datetime: Optional[datetime]
-    msats_load_datatime: Optional[datetime]
+    update_datetime: datetime | None
+    msats_load_datatime: datetime | None
 
 
 class EventRecord(NamedTuple):
@@ -98,7 +98,7 @@ class B2BDetails12(NamedTuple):
 
     trans_code: str
     ret_service_order: str
-    read_datetime: Optional[datetime]
+    read_datetime: datetime | None
     index_read: str
 
 

@@ -1,7 +1,6 @@
 import logging
 import os
 from pathlib import Path
-from typing import Optional
 
 import typer
 
@@ -12,6 +11,13 @@ from .version import __version__
 LOG_FORMAT = "%(asctime)s %(levelname)-8s %(message)s"
 app = typer.Typer()
 DEFAULT_DIR = Path(".")
+DEFAULT_DIR_OPTION = typer.Option(
+    DEFAULT_DIR,
+    exists=True,
+    file_okay=False,
+    dir_okay=True,
+    writable=True,
+)
 
 
 def version_callback(value: bool):
@@ -22,9 +28,7 @@ def version_callback(value: bool):
 
 @app.callback()
 def callback(
-    version: Optional[bool] = typer.Option(
-        None, "--version", callback=version_callback
-    ),
+    version: bool = typer.Option(False, "--version", callback=version_callback),
 ) -> None:
     """nemreader
 
@@ -34,9 +38,7 @@ def callback(
 
 
 @app.command()
-def list_nmis(
-    nemfile: Path, verbose: bool = typer.Option(False, "--verbose", "-v")
-) -> None:
+def list_nmis(nemfile: Path, verbose: bool = False) -> None:
     log_level = "DEBUG" if verbose else "WARNING"
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
 
@@ -50,15 +52,9 @@ def list_nmis(
 @app.command()
 def output_csv(
     nemfile: Path,
-    verbose: bool = typer.Option(False, "--verbose", "-v"),
-    set_interval: Optional[int] = None,
-    outdir: Path = typer.Option(
-        DEFAULT_DIR,
-        exists=True,
-        file_okay=False,
-        dir_okay=True,
-        writable=True,
-    ),
+    verbose: bool = False,
+    set_interval: int = 0,
+    outdir: Path = DEFAULT_DIR_OPTION,
 ) -> None:
     """Output NEM file to transposed CSV.
 
@@ -72,15 +68,7 @@ def output_csv(
 
 @app.command()
 def output_csv_daily(
-    nemfile: Path,
-    verbose: bool = typer.Option(False, "--verbose", "-v"),
-    outdir: Path = typer.Option(
-        DEFAULT_DIR,
-        exists=True,
-        file_okay=False,
-        dir_okay=True,
-        writable=True,
-    ),
+    nemfile: Path, verbose: bool = False, outdir: Path = DEFAULT_DIR_OPTION
 ) -> None:
     """Output NEM file to transposed CSV.
 
@@ -95,16 +83,10 @@ def output_csv_daily(
 @app.command()
 def output_sqlite(
     nemfile: Path,
-    outdir: Path = typer.Option(
-        DEFAULT_DIR,
-        exists=True,
-        file_okay=True,
-        dir_okay=True,
-        writable=True,
-    ),
+    outdir: Path = DEFAULT_DIR_OPTION,
     output_file: str = "nemdata.db",
-    set_interval: Optional[int] = None,
-    verbose: bool = typer.Option(False, "--verbose", "-v"),
+    set_interval: int | None = None,
+    verbose: bool = False,
 ) -> None:
     """Output NEM file to SQLite DB.
 
