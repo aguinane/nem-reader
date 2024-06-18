@@ -5,7 +5,7 @@ import zipfile
 from collections.abc import Generator, Iterable
 from datetime import datetime, timedelta
 from itertools import chain, islice
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -131,8 +131,8 @@ class NEMFile:
         )
 
     def get_data_frame(
-        self, split_days: bool = False, set_interval: Optional[int] = None
-    ) -> Optional[pd.DataFrame]:
+        self, split_days: bool = False, set_interval: int = 0
+    ) -> pd.DataFrame | None:
         """Return NEMData as a DataFrame"""
         nd = self.nem_data()
         frames = []
@@ -165,9 +165,9 @@ class NEMFile:
     def get_pivot_data_frame(
         self,
         split_days: bool = False,
-        set_interval: Optional[int] = None,
+        set_interval: int = 0,
         include_serno: bool = False,
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame | None:
         """Return NEMData as a DataFrame with suffix columns"""
         df = self.get_data_frame(split_days, set_interval)
         if df is None:
@@ -224,7 +224,7 @@ class NEMFile:
     def get_per_nmi_dfs(
         self,
         split_days: bool = False,
-        set_interval: Optional[int] = None,
+        set_interval: int | None = None,
         include_serno: bool = False,
     ) -> Generator[tuple[str, pd.DataFrame], None, None]:
         df = self.get_pivot_data_frame(split_days, set_interval, include_serno)
@@ -579,7 +579,7 @@ def parse_interval_records(
     ]
 
 
-def parse_reading(val: str) -> Optional[float]:
+def parse_reading(val: str) -> float | None:
     """Convert reading value to float (if possible)"""
     if val == "":
         return None
@@ -656,7 +656,7 @@ def parse_550_row(row: list) -> tuple:
     return B2BDetails13(row[1], row[2], row[3], row[4])
 
 
-def parse_datetime(record: str) -> Optional[datetime]:
+def parse_datetime(record: str) -> datetime | None:
     """Parse a datetime string into a python datetime object"""
     # NEM defines Date8, DateTime12 and DateTime14
     format_strings = {8: "%Y%m%d", 12: "%Y%m%d%H%M", 14: "%Y%m%d%H%M%S"}

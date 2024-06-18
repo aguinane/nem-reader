@@ -3,7 +3,7 @@ import os
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 from dateutil.parser import isoparse
 from sqlite_utils import Database
@@ -19,7 +19,7 @@ def output_as_sqlite(
     output_dir: str = ".",
     output_file: str = "nemdata.db",
     split_days: bool = False,
-    set_interval: Optional[int] = None,
+    set_interval: int | None = None,
     replace: bool = False,
 ) -> Path:
     """Export all channels to sqlite file"""
@@ -84,7 +84,7 @@ def output_folder_as_sqlite(
     output_dir: str = ".",
     output_file: str = "nemdata.db",
     split_days: bool = False,
-    set_interval: Optional[int] = None,
+    set_interval: int | None = None,
     replace: bool = False,
     skip_errors: bool = False,
 ) -> Path:
