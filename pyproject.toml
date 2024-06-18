@@ -10,13 +10,13 @@ license = { file = "LICENSE" }
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.9",
     "Operating System :: OS Independent",
 ]
 keywords = ["energy", "NEM12", "NEM13"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dynamic = ["version", "description"]
 dependencies = ["pandas", "sqlite_utils", "typer"]
 
@@ -29,9 +29,6 @@ Documentation = "https://nem-reader.readthedocs.io/en/latest/"
 
 [project.scripts]
 nemreader = "nemreader.cli:app"
-
-[tool.isort]
-profile = "black"
 
 [tool.pytest.ini_options]
 addopts = "-ra --failed-first --showlocals --durations=3 --cov=nemreader"
