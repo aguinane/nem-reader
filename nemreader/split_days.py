@@ -164,6 +164,12 @@ def make_set_interval(
 
         if r.uom and r.uom[-1].lower() == "h":
             grp_value = sum([x.read_value for x in grp_readings])
+        elif r.uom and r.uom[-1].lower() == "v":
+            # Exclude zero values to avoid ~120V when averaging 0 and 240 V
+            voltages = [x.read_value for x in grp_readings if x.read_value]
+            if not voltages:  # If all zero then that is okay
+                voltages = [x.read_value for x in grp_readings]
+            grp_value = mean(voltages)
         else:
             grp_value = mean([x.read_value for x in grp_readings])
 
