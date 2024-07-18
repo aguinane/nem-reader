@@ -1,6 +1,7 @@
 import logging
 import os
 from pathlib import Path
+from typing import Optional
 
 import typer
 
@@ -85,7 +86,7 @@ def output_sqlite(
     nemfile: Path,
     outdir: Path = DEFAULT_DIR_OPTION,
     output_file: str = "nemdata.db",
-    set_interval: int | None = None,
+    set_interval: Optional[int] = None,  # noqa: UP007
     verbose: bool = False,
 ) -> None:
     """Output NEM file to SQLite DB.
