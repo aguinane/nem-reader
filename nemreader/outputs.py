@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-
+import cudf as cf
 from .nem_objects import Reading
 from .nem_reader import NEMFile
 from .split_days import split_multiday_reads
@@ -37,6 +37,21 @@ def output_as_data_frames(
         data_frames.append((nmi, nmi_df))
     return data_frames
 
+def output_as_cudf_data_frames(
+    file_name,
+    split_days: bool = True,
+    set_interval: int | None = None,
+    strict: bool = False,
+) -> list[tuple[str, cf.DataFrame]]:
+    """Return list of data frames for each NMI"""
+    nf = NEMFile(file_name, strict=strict)
+    data_frames = []
+    for nmi, nmi_df in nf.get_per_nmi_dfs(
+        split_days=split_days, set_interval=set_interval
+    ):
+        nmi_df.rename(columns={"quality": "quality_method"}, inplace=True)
+        data_frames.append((nmi, nmi_df))
+    return data_frames
 
 def output_as_csv(file_name, output_dir=".", set_interval: int = 0):
     """

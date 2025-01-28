@@ -15,6 +15,7 @@ from .outputs import (
     output_as_csv,
     output_as_daily_csv,
     output_as_data_frames,
+    output_as_cudf_data_frames,
 )
 from .version import __version__
 
@@ -29,6 +30,7 @@ __all__ = [
     "output_as_sqlite",
     "output_folder_as_sqlite",
     "extend_sqlite",
+    "output_as_cudf_data_frames",
 ]
 
 # Set default logging handler to avoid "No handler found" warnings.
