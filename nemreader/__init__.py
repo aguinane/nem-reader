@@ -19,16 +19,16 @@ from .outputs import (
 from .version import __version__
 
 __all__ = [
-    "__version__",
     "NEMFile",
-    "read_nem_file",
+    "__version__",
+    "extend_sqlite",
     "nmis_in_file",
     "output_as_csv",
     "output_as_daily_csv",
     "output_as_data_frames",
     "output_as_sqlite",
     "output_folder_as_sqlite",
-    "extend_sqlite",
+    "read_nem_file",
 ]
 
 # Set default logging handler to avoid "No handler found" warnings.
