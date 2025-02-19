@@ -111,7 +111,7 @@ def output_folder_as_sqlite(
                 set_interval=set_interval,
                 replace=False,
             )
-        except Exception:
+        except Exception:  # noqa: PERF203
             log.error("Unable to process %s", file_name)
             if not skip_errors:
                 raise
@@ -132,20 +132,16 @@ def time_of_day(start: datetime) -> str:
     return "Night"
 
 
-def get_nmis(db_path: Path) -> list[str]:
-    nmis = []
+def get_nmis(db_path: Path) -> set[str]:
     db = Database(db_path)
-    for row in db.query("select distinct nmi from nmi_summary"):
-        nmis.append(row["nmi"])
-    return nmis
+    rows = db.query("select distinct nmi from nmi_summary")
+    return {row["nmi"] for row in rows}
 
 
-def get_nmi_channels(db_path: Path, nmi: str) -> list[str]:
-    channels = []
+def get_nmi_channels(db_path: Path, nmi: str) -> set[str]:
     db = Database(db_path)
-    for row in db.query("select * from nmi_summary where nmi = :nmi", {"nmi": nmi}):
-        channels.append(row["channel"])
-    return channels
+    rows = db.query("select * from nmi_summary where nmi = :nmi", {"nmi": nmi})
+    return {row["channel"] for row in rows}
 
 
 def get_nmi_date_range(db_path: Path, nmi: str) -> tuple[datetime, datetime]:

@@ -9,8 +9,6 @@ click-default-group==1.2.4
     # via sqlite-utils
 coverage==7.6.0
     # via pytest-cov
-exceptiongroup==1.2.2
-    # via pytest
 iniconfig==2.0.0
     # via pytest
 markdown-it-py==3.0.0
@@ -18,6 +16,7 @@ markdown-it-py==3.0.0
 mdurl==0.1.2
     # via markdown-it-py
 mypy==1.10.1
+    # via nemreader (pyproject.toml)
 mypy-extensions==1.0.0
     # via mypy
 numpy==2.0.0
@@ -25,6 +24,7 @@ numpy==2.0.0
 packaging==24.1
     # via pytest
 pandas==2.2.2
+    # via nemreader (pyproject.toml)
 pluggy==1.5.0
     # via
     #   pytest
@@ -32,8 +32,11 @@ pluggy==1.5.0
 pygments==2.18.0
     # via rich
 pytest==8.2.2
-    # via pytest-cov
+    # via
+    #   nemreader (pyproject.toml)
+    #   pytest-cov
 pytest-cov==5.0.0
+    # via nemreader (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via
     #   pandas
@@ -43,6 +46,7 @@ pytz==2024.1
 rich==13.7.1
     # via typer
 ruff==0.5.2
+    # via nemreader (pyproject.toml)
 shellingham==1.5.4
     # via typer
 six==1.16.0
@@ -50,14 +54,11 @@ six==1.16.0
 sqlite-fts4==1.0.3
     # via sqlite-utils
 sqlite-utils==3.36
+    # via nemreader (pyproject.toml)
 tabulate==0.9.0
     # via sqlite-utils
-tomli==2.0.1
-    # via
-    #   coverage
-    #   mypy
-    #   pytest
 typer==0.12.3
+    # via nemreader (pyproject.toml)
 typing-extensions==4.12.2
     # via
     #   mypy

@@ -97,6 +97,7 @@ def make_set_interval(
     group_records = {}
     mismatched_interval = False
     for r in readings:
+        uom = r.uom
         interval = r.t_end - r.t_start
         if interval == delta:  # No change required
             yield r
@@ -114,7 +115,7 @@ def make_set_interval(
                 else:
                     raise (e)
 
-            if r.uom and r.uom[-1].lower() == "h":
+            if uom and uom[-1].lower() == "h":
                 split_val = r.read_value / len(intervals)
             else:
                 split_val = r.read_value  # Average so assume flat
@@ -148,7 +149,7 @@ def make_set_interval(
     for group_end in sorted(group_records.keys()):
         start = group_end - delta
         grp_readings = group_records[group_end]
-        uom = grp_readings[0].uom
+        grp_uom = grp_readings[0].uom
         meter_serial_number = grp_readings[0].meter_serial_number
         quality_methods = list(set([x.quality_method for x in grp_readings]))
         event_codes = list(set([x.event_code for x in grp_readings if x.event_code]))
@@ -162,9 +163,9 @@ def make_set_interval(
             event_code = grp_readings[0].event_code
             event_desc = grp_readings[0].event_desc
 
-        if r.uom and r.uom[-1].lower() == "h":
+        if grp_uom and grp_uom[-1].lower() == "h":
             grp_value = sum([x.read_value for x in grp_readings])
-        elif r.uom and r.uom[-1].lower() == "v":
+        elif grp_uom and grp_uom[-1].lower() == "v":
             # Exclude zero values to avoid ~120V when averaging 0 and 240 V
             voltages = [x.read_value for x in grp_readings if x.read_value]
             if not voltages:  # If all zero then that is okay
