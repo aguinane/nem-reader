@@ -82,7 +82,7 @@ def flatten_and_group_rows(
     nmi_transactions: dict[str, list],
     nmi_readings: dict[str, list[Reading]],
     date_format: str = "%Y%m%d",
-) -> list[list]:
+) -> list[tuple]:
     """Create flattened list of NMI reading data"""
 
     channels = list(nmi_transactions.keys())
@@ -124,7 +124,7 @@ def flatten_and_group_rows(
             day_quality = "".join(qualities)
             if len(day_quality) > 1:
                 day_quality = "V"  # Multiple quality methods
-            row: list[Any] = [nmi, sn, day, ch, day_total, uom, day_quality]
+            row: tuple[Any] = (nmi, sn, day, ch, day_total, uom, day_quality)
             rows.append(row)
     return rows
 
@@ -161,8 +161,7 @@ def output_as_daily_csv(file_name, output_dir="."):
     ]
     for nmi in nmis:
         rows = flatten_and_group_rows(nmi, m.transactions[nmi], m.readings[nmi])
-        for row in rows:
-            all_rows.append(row)
+        all_rows += rows
 
     save_to_csv(headings, all_rows, output_path)
 

@@ -42,4 +42,4 @@ skip_empty = true
 fail_under = 90
 
 [tool.ruff.lint]
-select = ["A", "B", "E", "F", "I", "N", "SIM", "UP"]
+select = ["A", "B", "E", "F", "I", "N", "PERF", "RUF", "SIM", "UP"]
