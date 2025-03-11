@@ -13,9 +13,9 @@ nemreader output-csv "examples/nem12/nem12#S01#INTEGM#NEMMCO.zip"
 Which outputs transposed values to a csv file for all channels:
 
 | t_start             | t_end               | quality | evt_code | evt_desc | Q1    | E1    |
-|---------------------|---------------------|----------------|------------|------------|-------|-------|
-| 2004-02-01 00:00:00 | 2004-02-01 00:30:00 | A              |            |            | 2.222 | 1.111 |
-| 2004-02-01 00:30:00 | 2004-02-01 01:00:00 | A              |            |            | 2.222 | 1.111 |
+| ------------------- | ------------------- | ------- | -------- | -------- | ----- | ----- |
+| 2004-02-01 00:00:00 | 2004-02-01 00:30:00 | A       |          |          | 2.222 | 1.111 |
+| 2004-02-01 00:30:00 | 2004-02-01 01:00:00 | A       |          |          | 2.222 | 1.111 |
 
 
 # Parsing Data
@@ -96,22 +96,17 @@ print(df)
 
 # Charting
 
-You can chart the usage data using
-[pandas](https://pip.pypa.io/en/stable/quickstart/):
+You can chart the usage data using plotly:
 
 ``` python
-import matplotlib.pyplot as plt
-from nemreader import output_as_data_frames
+import plotly.express as px
 
-# Setup Pandas DataFrame
-dfs = output_as_data_frames("examples/nem12/NEM12#000000000000002#CNRGYMDP#NEMMCO.zip")
-nmi, df = dfs[0] # Return data for first NMI in file
-df.set_index("t_start", inplace=True)
+from nemreader import NEMFile
 
-# Chart time of day profile
-hourly = df.groupby([(df.index.hour)]).sum(numeric_only=True)
-plot = hourly.plot(title=nmi, kind="bar", y=["E1"])
-plt.show()
+m = NEMFile("examples/nem12/NEM12#000000000000002#CNRGYMDP#NEMMCO.zip")
+df = m.get_pivot_data_frame()
+fig = px.bar(df, x="t_start", y="E1")
+fig.show()
 ```
 
 ![image](_static/img/plot_profile.png)
