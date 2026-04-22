@@ -53,7 +53,7 @@ Alternatively, you can also return the data as a pandas dataframe.
 ``` python
 from nemreader import NEMFile
 m = NEMFile('examples/unzipped/Example_NEM12_actual_interval.csv')
-df = m.get_data_frame()
+df = m.get_data_frame_long()
 print(df)
 ```
 
@@ -76,7 +76,7 @@ print(df)
 There is also an option to pivot based on the NMI suffix/channel.
 
 ``` python
-df = m.get_pivot_data_frame()
+df = m.get_data_frame_wide()
 print(df)
 ```
 
@@ -104,7 +104,7 @@ import plotly.express as px
 from nemreader import NEMFile
 
 m = NEMFile("examples/nem12/NEM12#000000000000002#CNRGYMDP#NEMMCO.zip")
-df = m.get_pivot_data_frame()
+df = m.get_data_frame_wide()
 fig = px.bar(df, x="t_start", y="E1")
 fig.show()
 ```

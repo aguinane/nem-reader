@@ -5,7 +5,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
+import polars as pl
 
 from .nem_objects import Reading
 from .nem_reader import NEMFile
@@ -26,14 +26,14 @@ def output_as_data_frames(
     split_days: bool = True,
     set_interval: int | None = None,
     strict: bool = False,
-) -> list[tuple[str, pd.DataFrame]]:
+) -> list[tuple[str, pl.DataFrame]]:
     """Return list of data frames for each NMI"""
     nf = NEMFile(file_name, strict=strict)
     data_frames = []
     for nmi, nmi_df in nf.get_per_nmi_dfs(
         split_days=split_days, set_interval=set_interval
     ):
-        nmi_df.rename(columns={"quality": "quality_method"}, inplace=True)
+        nmi_df = nmi_df.rename({"quality": "quality_method"})
         data_frames.append((nmi, nmi_df))
     return data_frames
 
@@ -52,14 +52,14 @@ def output_as_csv(file_name, output_dir=".", set_interval: int = 0):
     output_paths = []
     os.makedirs(output_dir, exist_ok=True)
     nf = NEMFile(file_name, strict=False)
-    df = nf.get_pivot_data_frame(set_interval=set_interval)
+    df = nf.get_data_frame_wide(set_interval=set_interval)
     for nmi in nf.nmis:
-        nmi_df = df[(df["nmi"] == nmi)]
-        del nmi_df["nmi"]
-        last_date = nmi_df.iloc[-1][1].strftime("%Y%m%d")
+        nmi_df = df.filter(pl.col("nmi") == nmi)
+        nmi_df = nmi_df.drop("nmi")
+        last_date = nmi_df.row(-1)[1].strftime("%Y%m%d")
         output_file = f"{nmi}_{last_date}_transposed.csv"
         output_path = output_dir / output_file
-        nmi_df.to_csv(output_path, index=False)
+        nmi_df.write_csv(str(output_path))
         output_paths.append(output_path)
     return output_paths
 

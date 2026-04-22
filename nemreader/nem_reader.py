@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from itertools import chain, islice
 from typing import Any
 
-import pandas as pd
+import polars as pl
 
 from .nem_objects import (
     B2BDetails12,
@@ -130,9 +130,9 @@ class NEMFile:
             transactions=reads.transactions,
         )
 
-    def get_data_frame(
+    def get_data_frame_long(
         self, split_days: bool = False, set_interval: int = 0
-    ) -> pd.DataFrame | None:
+    ) -> pl.DataFrame | None:
         """Return NEMData as a DataFrame"""
         nd = self.nem_data()
         frames = []
@@ -150,75 +150,72 @@ class NEMFile:
                     "nmi": [nmi for _ in range(len(reads))],
                     "suffix": [suffix for _ in range(len(reads))],
                     "serno": [x.meter_serial_number for x in reads],
-                    "t_start": pd.to_datetime([x.t_start for x in reads]),
-                    "t_end": pd.to_datetime([x.t_end for x in reads]),
+                    "t_start": [x.t_start for x in reads],
+                    "t_end": [x.t_end for x in reads],
                     "value": [x.read_value for x in reads],
                     "quality": [x.quality_method for x in reads],
                     "evt_code": [x.event_code for x in reads],
                     "evt_desc": [x.event_desc for x in reads],
                 }
-                frames.append(pd.DataFrame(data))
+                frames.append(pl.DataFrame(data))
         if not frames:
             return None
-        return pd.concat(frames)
+        return pl.concat(frames)
 
-    def get_pivot_data_frame(
+    def get_data_frame_wide(
         self,
         split_days: bool = False,
         set_interval: int = 0,
         include_serno: bool = False,
-    ) -> pd.DataFrame | None:
+    ) -> pl.DataFrame | None:
         """Return NEMData as a DataFrame with suffix columns"""
-        df = self.get_data_frame(split_days, set_interval)
+        df = self.get_data_frame_long(split_days, set_interval)
         if df is None:
             return df
-        index_cols = [
-            "nmi",
-            "suffix",
-            "t_start",
-            "t_end",
-        ]
-        if include_serno:
-            index_cols.append("serno")
-        else:
-            del df["serno"]
 
-        df.set_index(index_cols, inplace=True)
-        df = df.unstack("suffix")
-        df = df.reset_index()
-        df.columns = df.columns.map("_".join).str.strip("_")
+        if not include_serno:
+            df = df.drop("serno")
+
+        index_cols = ("nmi", "t_start", "t_end")
+        value_cols = ["value", "quality", "evt_code", "evt_desc"]
+
+        df = df.pivot("suffix", index=index_cols, values=value_cols)
+
         quality = 0
         evt_code = 0
         evt_desc = 0
         new_names = {}
-        for col in df.columns:
+
+        columns = df.columns
+        for col in columns:
             if "value_" in col:
                 new_names[col] = col[6:]
 
             if "quality" in col:
-                perc_nans = df[col].isna().sum() / len(df[col])
+                perc_nans = df[col].is_null().sum() / df.height
                 if not quality and perc_nans < 0.5:
                     new_names[col] = "quality"
                     quality += 1
                 else:
-                    del df[col]
+                    df = df.drop(col)
 
             if "evt_code" in col:
-                perc_nans = df[col].isna().sum() / len(df[col])
+                perc_nans = df[col].is_null().sum() / df.height
                 if not evt_code and perc_nans < 0.5:
                     new_names[col] = "evt_code"
                     evt_code += 1
                 else:
-                    del df[col]
+                    df = df.drop(col)
 
             if "evt_desc" in col:
-                perc_nans = df[col].isna().sum() / len(df[col])
+                perc_nans = df[col].is_null().sum() / df.height
                 if not evt_desc and perc_nans < 0.5:
                     new_names[col] = "evt_desc"
                     evt_desc += 1
                 else:
-                    del df[col]
-        df.rename(columns=new_names, inplace=True)
+                    df = df.drop(col)
+        df = df.rename(new_names)
+
         return df
 
     def get_per_nmi_dfs(
@@ -226,12 +223,12 @@ class NEMFile:
         split_days: bool = False,
         set_interval: int | None = None,
         include_serno: bool = False,
-    ) -> Generator[tuple[str, pd.DataFrame], None, None]:
-        df = self.get_pivot_data_frame(split_days, set_interval, include_serno)
-        nmis = df.nmi.unique()
+    ) -> Generator[tuple[str, pl.DataFrame], None, None]:
+        df = self.get_data_frame_wide(split_days, set_interval, include_serno)
+        nmis = df["nmi"].explode().unique().to_list() if df is not None else []
         for nmi in nmis:
-            nmi_df = df[(df["nmi"] == nmi)]
-            del nmi_df["nmi"]
+            nmi_df = df.filter(pl.col("nmi") == nmi)
+            nmi_df = nmi_df.drop("nmi")
             yield nmi, nmi_df
 
 

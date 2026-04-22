@@ -76,4 +76,3 @@ def output_csv_daily(
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
     fname = output_as_daily_csv(nemfile, output_dir=outdir)
     typer.echo(f"Created {fname}")
-

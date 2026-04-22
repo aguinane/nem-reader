@@ -59,8 +59,8 @@ def test_no_records():
 
 def test_empty_file():
     nf = NEMFile("examples/invalid/Example_empty_file.csv", strict=False)
-    df = nf.get_data_frame()
+    df = nf.get_data_frame_long()
     assert df is None
 
-    df = nf.get_pivot_data_frame()
+    df = nf.get_data_frame_wide()
     assert df is None
