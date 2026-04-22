@@ -1,11 +1,8 @@
 import logging
-import os
 from pathlib import Path
-from typing import Optional
 
 import typer
 
-from .output_db import extend_sqlite, output_as_sqlite
 from .outputs import nmis_in_file, output_as_csv, output_as_daily_csv
 from .version import __version__
 
@@ -80,38 +77,3 @@ def output_csv_daily(
     fname = output_as_daily_csv(nemfile, output_dir=outdir)
     typer.echo(f"Created {fname}")
 
-
-@app.command()
-def output_sqlite(
-    nemfile: Path,
-    outdir: Path = DEFAULT_DIR_OPTION,
-    output_file: str = "nemdata.db",
-    set_interval: Optional[int] = None,  # noqa: UP007
-    verbose: bool = False,
-) -> None:
-    """Output NEM file to SQLite DB.
-
-    nemfile is the name of the file or folder to parse.
-    """
-    log_level = "DEBUG" if verbose else "WARNING"
-    logging.basicConfig(level=log_level, format=LOG_FORMAT)
-    if os.path.isdir(nemfile):
-        typer.echo(f"Getting files in directory {nemfile}")
-        files = list(nemfile.glob("*.csv"))
-        files += list(nemfile.glob("*.zip"))
-    else:
-        files = [nemfile]
-    for fp in files:
-        typer.echo(f"Processing {fp}")
-        try:
-            output_as_sqlite(
-                fp,
-                output_dir=outdir,
-                output_file=output_file,
-                set_interval=set_interval,
-            )
-        except Exception:
-            typer.echo(f"Not a valid nem file: {fp}")
-    db_path = outdir / output_file
-    extend_sqlite(db_path)
-    typer.echo("Finished exporting to DB.")
