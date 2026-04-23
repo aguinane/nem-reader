@@ -37,7 +37,7 @@ def test_daily_csv_output(tmp_path: Path):
 
 
 def test_data_frame_output():
-    """Create a pandas dataframe"""
+    """Create a polars dataframe"""
     file_name = "examples/unzipped/Example_NEM12_actual_interval.csv"
     output_dfs = output_as_data_frames(file_name)
     for nmi, df in output_dfs:
@@ -46,7 +46,7 @@ def test_data_frame_output():
 
 
 def test_data_frame_output_different_interval():
-    """Create a pandas dataframe"""
+    """Create a polars dataframe"""
     file_name = "examples/unzipped/Example_NEM12_different_interval_length.csv"
     output_dfs = output_as_data_frames(file_name)
     nmi, df = output_dfs[0]  # Return data for first NMI in file
@@ -56,7 +56,7 @@ def test_data_frame_output_different_interval():
 
 
 def test_data_frame_output_nem13():
-    """Create a pandas dataframe"""
+    """Create a polars dataframe"""
     file_name = "examples/unzipped/Example_NEM13_forward_estimate.csv"
     output_dfs = output_as_data_frames(file_name)
     for nmi, df in output_dfs:
