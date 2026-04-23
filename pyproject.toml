@@ -25,7 +25,6 @@ test = ["pytest >=2.7.3", "pytest-cov"]
 
 [project.urls]
 Source = "https://github.com/aguinane/nem-reader/"
-Documentation = "https://nem-reader.readthedocs.io/en/latest/"
 
 [project.scripts]
 nemreader = "nemreader.cli:app"
