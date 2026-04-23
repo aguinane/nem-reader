@@ -4,7 +4,7 @@ import logging
 import zipfile
 from collections.abc import Generator, Iterable
 from datetime import datetime, timedelta
-from itertools import chain, islice
+from itertools import chain
 from typing import Any
 
 import polars as pl
@@ -225,6 +225,8 @@ class NEMFile:
         include_serno: bool = False,
     ) -> Generator[tuple[str, pl.DataFrame], None, None]:
         df = self.get_data_frame_wide(split_days, set_interval, include_serno)
+        if df is None:
+            return
         nmis = df["nmi"].explode().unique().to_list() if df is not None else []
         for nmi in nmis:
             nmi_df = df.filter(pl.col("nmi") == nmi)
@@ -488,9 +490,9 @@ def parse_250_row(row: list) -> BasicMeterData:
     )
 
 
-def nth(iterable, n, default=None):
-    "Returns the nth item or a default value"
-    return next(islice(iterable, n, None), default)
+def nth(items: list, n: int, default=None):
+    """Returns the nth item or a default value"""
+    return items[n] if n < len(items) else default
 
 
 def parse_300_row(
@@ -653,20 +655,18 @@ def parse_550_row(row: list) -> tuple:
     return B2BDetails13(row[1], row[2], row[3], row[4])
 
 
+# NEM defines Date8, DateTime12 and DateTime14
+DATETIME_FORMATS = {8: "%Y%m%d", 12: "%Y%m%d%H%M", 14: "%Y%m%d%H%M%S"}
+
+
 def parse_datetime(record: str) -> datetime | None:
     """Parse a datetime string into a python datetime object"""
-    # NEM defines Date8, DateTime12 and DateTime14
-    format_strings = {8: "%Y%m%d", 12: "%Y%m%d%H%M", 14: "%Y%m%d%H%M%S"}
-
     if record == "" or record is None:
         return None
-
+    record = record.strip()
     try:
-        timestamp = datetime.strptime(
-            record.strip(), format_strings[len(record.strip())]
-        )
+        timestamp = datetime.strptime(record, DATETIME_FORMATS[len(record)])
     except (ValueError, KeyError):
         log.debug(f"Malformed date '{record}' ")
         return None
-
     return timestamp

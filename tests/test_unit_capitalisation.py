@@ -27,9 +27,5 @@ def test_unit_capitalisation():
         nmi_df_30min = df_30min.filter(pl.col("nmi") == nmi)
         nmi_df_60min = df_60min.filter(pl.col("nmi") == nmi)
         # Units are in KWH - expect the values to be summed
-        assert abs(
-            nmi_df_30min["E1"].sum() - nmi_df_60min["E1"].sum()
-        ) < 1e-9
-        assert abs(
-            nmi_df_30min["E1"].sum() - nmi_df_15min["E1"].sum()
-        ) < 1e-9
+        assert abs(nmi_df_30min["E1"].sum() - nmi_df_60min["E1"].sum()) < 1e-9
+        assert abs(nmi_df_30min["E1"].sum() - nmi_df_15min["E1"].sum()) < 1e-9
