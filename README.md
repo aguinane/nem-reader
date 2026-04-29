@@ -1,7 +1,10 @@
 # nem-reader
 
-[![PyPI version](https://img.shields.io/pypi/pyversions/nemreader?color=%2344CC11)](https://pypi.org/project/nemreader/)
-[![PyPi downloads](https://img.shields.io/pypi/dw/nemreader?label=downloads@pypi&color=344CC11)](https://pypi.org/project/nemreader/)
+[![PyPI version](https://img.shields.io/pypi/pyversions/nemreader)][pypi]
+[![PyPi downloads](https://img.shields.io/pypi/dw/nemreader)][pypi]
+
+[pypi]: https://pypi.org/project/nemreader/
+
 
 The Australian Energy Market Operator (AEMO) defines a [Meter Data File Format (MDFF)][mdff] for reading energy billing data. When you request energy data from your distribution utility or retailer, this is probably the format it will come in. 
 
