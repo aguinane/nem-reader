@@ -41,10 +41,10 @@ nemreader output-csv "examples/nem12/nem12#S01#INTEGM#NEMMCO.zip"
 
 Which outputs transposed values to a csv file for all channels:
 
-| t_start             | t_end               | quality | evt_code | evt_desc | Q1    | E1    |
-| ------------------- | ------------------- | ------- | -------- | -------- | ----- | ----- |
-| 2004-02-01 00:00:00 | 2004-02-01 00:30:00 | A       |          |          | 2.222 | 1.111 |
-| 2004-02-01 00:30:00 | 2004-02-01 01:00:00 | A       |          |          | 2.222 | 1.111 |
+| t_start             | t_end               | E1    | E2    | quality | evt_code | evt_desc |
+| ------------------- | ------------------- | ----- | ----- | ------- | -------- | -------- |
+| 2004-03-01T00:00:00 | 2004-03-01T00:15:00 | 1.5   | 1.5   | A       | ""       | ""       |
+| 2004-03-01T00:15:00 | 2004-03-01T00:30:00 | 1.5   | 1.5   | A       | ""       | ""       |
 
 
 ## Export to DataFrame
