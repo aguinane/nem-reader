@@ -21,7 +21,7 @@ dynamic = ["version", "description"]
 dependencies = ["polars", "typer>=0.12.3"]
 
 [project.optional-dependencies]
-test = ["pytest >=2.7.3", "pytest-cov"]
+test = ["pytest >=2.7.3", "pytest-cov", "pytest-benchmark"]
 
 [project.urls]
 Source = "https://github.com/aguinane/nem-reader/"
@@ -30,7 +30,8 @@ Source = "https://github.com/aguinane/nem-reader/"
 nemreader = "nemreader.cli:app"
 
 [tool.pytest.ini_options]
-addopts = "-ra --failed-first --showlocals --durations=3 --cov=nemreader"
+addopts = "-ra --failed-first --showlocals --durations=3 --cov=nemreader --benchmark-skip"
+testpaths = ["tests"]
 
 [tool.coverage.run]
 omit = ["*/version.py", '*/__main__.py']
