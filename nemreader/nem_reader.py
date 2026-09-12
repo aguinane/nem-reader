@@ -561,21 +561,26 @@ def parse_interval_records(
 ) -> list[Reading]:
     """Convert interval values into tuples with datetime"""
     interval_delta = timedelta(minutes=interval)
-    return [
-        Reading(
-            t_start=interval_date + (i * interval_delta),
-            t_end=interval_date + (i * interval_delta) + interval_delta,
-            read_value=parse_reading(val),
-            uom=uom,
-            quality_method=quality_method,
-            meter_serial_number=meter_serial_number,
-            event_code=event_code,  # This may get changed later by a 400 row
-            event_desc=event_desc,  # This may get changed later by a 400 row
-            val_start=None,
-            val_end=None,  # No before and after readings for intervals
+    readings = []
+    t_start = interval_date
+    for val in interval_record:
+        t_end = t_start + interval_delta
+        readings.append(
+            Reading(
+                t_start,
+                t_end,
+                parse_reading(val),
+                uom,
+                meter_serial_number,
+                quality_method,
+                event_code,  # This may get changed later by a 400 row
+                event_desc,  # This may get changed later by a 400 row
+                None,
+                None,  # No before and after readings for intervals
+            )
         )
-        for i, val in enumerate(interval_record)
-    ]
+        t_start = t_end
+    return readings
 
 
 def parse_reading(val: str) -> float | None:
