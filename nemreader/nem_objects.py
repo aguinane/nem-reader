@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime
 from typing import NamedTuple
 
@@ -27,7 +28,8 @@ class NmiDetails(NamedTuple):
     next_scheduled_read_date: datetime | None
 
 
-class Reading(NamedTuple):
+@dataclass(slots=True)
+class Reading:
     """Represents a meter reading"""
 
     t_start: datetime
