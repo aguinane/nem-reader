@@ -562,8 +562,8 @@ def parse_interval_records(
     """Convert interval values into tuples with datetime"""
     interval_delta = timedelta(minutes=interval)
     readings = []
-    for i, val in enumerate(interval_record):
-        t_start = interval_date + (i * interval_delta)
+    t_start = interval_date
+    for val in interval_record:
         t_end = t_start + interval_delta
         readings.append(
             Reading(
@@ -579,6 +579,7 @@ def parse_interval_records(
                 None,  # No before and after readings for intervals
             )
         )
+        t_start = t_end
     return readings
 
 
