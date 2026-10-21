@@ -56,7 +56,8 @@ You can return the data as a polars dataframe.
 
 ``` python
 from nemreader import NEMFile
-m = NEMFile('examples/unzipped/Example_NEM12_actual_interval.csv')
+
+m = NEMFile("examples/unzipped/Example_NEM12_actual_interval.csv")
 df = m.get_data_frame_long()
 print(df)
 ```

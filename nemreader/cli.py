@@ -32,7 +32,6 @@ def callback(
 
     Parse AEMO NEM12 and NEM13 meter data files
     """
-    pass
 
 
 @app.command()

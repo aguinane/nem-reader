@@ -118,8 +118,7 @@ def flatten_and_group_rows(
                 date_qualities[t_group] = set()
             date_qualities[t_group].add(quality)
 
-        for day in date_totals:
-            day_total = date_totals[day]
+        for day, day_total in date_totals.items():
             qualities = list(date_qualities[day])
             day_quality = "".join(qualities)
             if len(day_quality) > 1:
