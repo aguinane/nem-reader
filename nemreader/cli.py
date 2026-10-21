@@ -7,7 +7,7 @@ from .outputs import nmis_in_file, output_as_csv, output_as_daily_csv
 from .version import __version__
 
 LOG_FORMAT = "%(asctime)s %(levelname)-8s %(message)s"
-app = typer.Typer()
+app = typer.Typer(no_args_is_help=True)
 DEFAULT_DIR = Path(".")
 DEFAULT_DIR_OPTION = typer.Option(
     DEFAULT_DIR,
@@ -32,7 +32,6 @@ def callback(
 
     Parse AEMO NEM12 and NEM13 meter data files
     """
-    pass
 
 
 @app.command()

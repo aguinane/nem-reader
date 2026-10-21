@@ -1,7 +1,10 @@
 # nem-reader
 
-[![PyPI version](https://img.shields.io/pypi/pyversions/nemreader?color=%2344CC11)](https://pypi.org/project/nemreader/)
-[![PyPi downloads](https://img.shields.io/pypi/dw/nemreader?label=downloads@pypi&color=344CC11)](https://pypi.org/project/nemreader/)
+[![PyPI version](https://img.shields.io/pypi/pyversions/nemreader)][pypi]
+[![PyPi downloads](https://img.shields.io/pypi/dw/nemreader)][pypi]
+
+[pypi]: https://pypi.org/project/nemreader/
+
 
 The Australian Energy Market Operator (AEMO) defines a [Meter Data File Format (MDFF)][mdff] for reading energy billing data. When you request energy data from your distribution utility or retailer, this is probably the format it will come in. 
 
@@ -53,7 +56,8 @@ You can return the data as a polars dataframe.
 
 ``` python
 from nemreader import NEMFile
-m = NEMFile('examples/unzipped/Example_NEM12_actual_interval.csv')
+
+m = NEMFile("examples/unzipped/Example_NEM12_actual_interval.csv")
 df = m.get_data_frame_long()
 print(df)
 ```

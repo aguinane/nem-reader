@@ -69,6 +69,7 @@ class NEMFile:
         try:
             record_indicator = int(first_row[0])
         except Exception:
+            log.exception("Error parsing first row of file %s", file_name)
             record_indicator = 0
 
         if not first_row or record_indicator != 100:
@@ -291,7 +292,6 @@ def parse_nem12_rows(nem_list: Iterable, file_name=None) -> NEMReadings:
                     )
 
                 observed_900_records.append(row_num)
-                pass
 
             elif record_indicator == 200:
                 try:
@@ -355,7 +355,7 @@ def parse_nem12_rows(nem_list: Iterable, file_name=None) -> NEMReadings:
         except (KeyError, ValueError, AssertionError, IndexError, TypeError) as e:
             raise ValueError(f"Unable to parse line {row_num}") from e
 
-    for nmi in readings:
+    for nmi in readings:  # noqa: PLC0206
         for suffix in readings[nmi]:
             readings[nmi][suffix] = flatten_list(readings[nmi][suffix])
 
@@ -377,7 +377,7 @@ def parse_nem13_rows(nem_list: Iterable) -> NEMReadings:
         record_indicator = int(row[0])
 
         if record_indicator == 900:
-            for nmi in readings:
+            for nmi in readings:  # noqa: PLC0206
                 for suffix in readings[nmi]:
                     readings[nmi][suffix] = flatten_list(readings[nmi][suffix])
             break  # End of file

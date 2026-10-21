@@ -48,11 +48,9 @@ def split_reading_into_days(start, end, val):
     # Generate the rest of the days
     period_start = next_day
     period_end = period_start + timedelta(days=1)
-    if period_end >= end:
-        period_end = end
+    period_end = min(end, period_end)
     while period_start < end:
-        if period_end > end:
-            period_end = end
+        period_end = min(period_end, end)
         period_secs = (period_end - period_start).total_seconds()
         period_val = val * (period_secs / total_secs)
         yield (
@@ -73,7 +71,7 @@ def new_intervals(
     if (orig_delta / delta) % 1 != 0:
         raise ValueError(f"New interval of {delta} not an increment of {orig_delta}")
     num_intervals = int(orig_delta / delta)
-    for i in range(0, num_intervals):
+    for i in range(num_intervals):
         start = start_date + i * delta
         end = start + delta
         yield start, end
@@ -108,12 +106,12 @@ def make_set_interval(
                 intervals = list(
                     new_intervals(r.t_start, r.t_end, interval=new_interval)
                 )
-            except ValueError as e:
+            except ValueError:
                 if skip_mistmatched_intervals:
                     mismatched_interval = True
                     continue  # Interval cannot be converted
                 else:
-                    raise (e)
+                    raise
 
             if uom and uom[-1].lower() == "h":
                 split_val = r.read_value / len(intervals)
@@ -151,9 +149,9 @@ def make_set_interval(
         grp_readings = group_records[group_end]
         grp_uom = grp_readings[0].uom
         meter_serial_number = grp_readings[0].meter_serial_number
-        quality_methods = list(set([x.quality_method for x in grp_readings]))
-        event_codes = list(set([x.event_code for x in grp_readings if x.event_code]))
-        event_descs = list(set([x.event_desc for x in grp_readings if x.event_desc]))
+        quality_methods = list({x.quality_method for x in grp_readings})
+        event_codes = list({x.event_code for x in grp_readings if x.event_code})
+        event_descs = list({x.event_desc for x in grp_readings if x.event_desc})
         if len(quality_methods) == 1:
             quality_method = grp_readings[0].quality_method
             event_code = event_codes[0] if event_codes else ""
